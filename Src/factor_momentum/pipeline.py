@@ -8,6 +8,9 @@ from .data_clean import main as clean_main
 from .returns import main as returns_main
 from .signals.momentum_12_1 import main as signal_main
 from .portfolio import main as portfolio_main
+from .evaluate import main as evaluate_main
+from .selection import main as selection_main
+from .web_report import main as web_report_main
 
 
 def main() -> None:
@@ -27,7 +30,10 @@ def main() -> None:
         out_dir.mkdir(parents=True, exist_ok=True)
         run_backtest(cost_bps=bps, out_dir=out_dir)
 
+    evaluate_main()
+    selection_main()
+    web_report_main()
+
 
 if __name__ == "__main__":
     main()
-

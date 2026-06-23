@@ -25,13 +25,12 @@ def load_prices_wide(path: Path) -> pd.DataFrame: # -> is a return type hint - i
 
 def make_month_end_prices(daily_prices: pd.DataFrame) -> pd.DataFrame:
     """
-    Month-end prices derived from daily prices (last available trading day each month).
-    Index will be calendar month-end timestamps produced by resample('M').
+    Month-end prices derived from daily prices, indexed by the last trading day each month.
     """
-    # Resample groups the daily rows into monthly buckets - ME=Month End
-    # last() takes the last row within each monthly buckets
-    month_end = daily_prices.resample("ME").last() 
-    return month_end
+    sorted_prices: pd.DataFrame = daily_prices.sort_index()
+    month_periods: pd.PeriodIndex = sorted_prices.index.to_period("M")
+    month_end_prices: pd.DataFrame = sorted_prices.groupby(month_periods).tail(1)
+    return month_end_prices
 
 # computing mom
 def momentum_12_1(month_end_prices: pd.DataFrame) -> pd.DataFrame:

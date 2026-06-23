@@ -19,3 +19,6 @@ Results/*
 # …except the assets folder
 !Results/assets/
 !Results/assets/**
+# …and the generated local website
+!Results/site/
+!Results/site/**

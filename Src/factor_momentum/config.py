@@ -30,6 +30,8 @@ RESULTS_DIR = PROJECT_ROOT / "Results"
 # ========= Common file paths =========
 WEIGHTS_PATH = DATA_DIR_PROCESSED / "weights_top10_eq.parquet"
 RETURNS_PATH = DATA_DIR_PROCESSED / "returns.parquet"
+PRICES_PATH = DATA_DIR_PROCESSED / "prices.parquet"
+MOMENTUM_SCORES_PATH = DATA_DIR_PROCESSED / "mom12_1_scores.parquet"
 
 # ========= Robustness grid =========
 COST_BPS_GRID = [0, 10, 50]
@@ -38,3 +40,18 @@ COST_BPS_GRID = [0, 10, 50]
 STRATEGY_RETURNS_FILE = "strategy_returns.parquet"
 EQUITY_CURVE_FILE = "equity_curve.parquet"
 META_FILE = "run_meta.txt"
+COST_GRID_METRICS_FILE = "cost_grid_metrics.csv"
+
+# ========= Latest selection report =========
+SELECTION_TOP_N = 10
+SELECTION_MIN_MOMENTUM = 0.0
+SELECTION_SMA_WINDOW = 200
+SELECTION_VOL_WINDOW = 63
+SELECTION_HIGH_VOL_QUANTILE = 0.75
+SELECTION_FILE = "latest_selection.csv"
+
+# ========= Local website =========
+SITE_DIR = RESULTS_DIR / "site"
+SITE_INDEX_FILE = "index.html"
+SITE_BASE_COST_BPS = 10
+SITE_CHART_POINTS = 220
