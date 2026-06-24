@@ -11,6 +11,7 @@ The original repository provides the 12–1 momentum backtest foundation. This v
 - transaction-cost comparison output,
 - multi-universe comparison,
 - ETF dual momentum rotation,
+- low-volatility quality momentum defensive selection,
 - and a local beginner-friendly website for reading the results.
 
 ## 🎯 Overview
@@ -27,7 +28,7 @@ The current strategy library follows the practical priority suggested in the res
 | --- | --- | --- |
 | Stable version | ETF dual momentum | Implemented as a separate ETF rotation dashboard |
 | Aggressive version | US stock momentum | Implemented through 12–1 stock momentum and multi-universe comparison |
-| Defensive version | Low-volatility / quality momentum | Planned next; requires either a price-only proxy or fundamental data |
+| Defensive version | Low-volatility / quality momentum | Implemented as a defensive stock dashboard with a current fundamental-quality overlay |
 
 **Signal (12–1 momentum) meaning:** 
 - Look back **12 months**
@@ -64,6 +65,37 @@ Monthly rule:
 The generated dashboard is:
 ```bash
 Results/site/etf_dual_momentum/index.html
+```
+
+### Low-volatility quality momentum strategy
+This strategy is the defensive-version dashboard.
+
+Universe:
+- `sector_balanced_100`
+
+Monthly price rule:
+1. Compute 12–1 momentum.
+2. Keep stocks with positive momentum.
+3. Keep stocks trading above their 200-day moving average.
+4. Keep stocks whose recent 126-trading-day volatility is not in the high-volatility group.
+5. Rank the remaining stocks by a blend of momentum strength and low volatility.
+6. Select up to 8 stocks.
+7. If fewer than 5 stocks pass the rule, keep the unused allocation in `CASH`.
+
+Current quality overlay:
+1. Pull a latest fundamental snapshot from `yfinance`.
+2. Score quality using profitability, cash-flow yield, and debt-pressure fields.
+3. Keep the top half of quality scores as quality-pass stocks.
+4. The latest defensive candidate list must pass both the price rule and the quality rule.
+
+Important limitation:
+- The historical backtest does **not** use today's fundamental snapshot for past dates.
+- The backtest validates the price-based defensive rule.
+- The latest dashboard then applies current fundamental quality to the current month selection.
+
+The generated dashboard is:
+```bash
+Results/site/low_vol_quality_momentum/index.html
 ```
 
 ### Stock momentum strategy
@@ -127,6 +159,7 @@ So if 10 tickers are selected, each gets weight:
 11) Compare all configured universes — `Src/factor_momentum/pipeline.py`
 12) Generate the local website — `Src/factor_momentum/web_report.py`
 13) Run ETF dual momentum and generate its dashboard — `Src/factor_momentum/strategies/etf_dual_momentum.py` + `Src/factor_momentum/etf_dual_momentum_report.py`
+14) Run low-volatility quality momentum and generate its dashboard — `Src/factor_momentum/strategies/low_vol_quality_momentum.py` + `Src/factor_momentum/low_vol_quality_report.py`
 
 ## 🚀 Repo Structure
 - `Src/factor_momentum/` — core pipeline and strategy code
@@ -137,10 +170,12 @@ So if 10 tickers are selected, each gets weight:
 - `Results/universe_comparison.csv` — comparison table across configured universes
 - `Results/universes/` — per-universe backtest outputs for non-default universes
 - `Results/strategies/etf_dual_momentum/` — ETF dual momentum summary CSV outputs
+- `Results/strategies/low_vol_quality_momentum/` — defensive low-volatility quality momentum summary CSV outputs
 - `Results/assets/` — lightweight, committed sample artifacts (plots / summary tables)
 - `Results/site/index.html` — generated local website with the latest readable stock-selection dashboard
 - `Results/site/<universe>/index.html` — generated local website for each non-default universe
 - `Results/site/etf_dual_momentum/index.html` — generated ETF dual momentum dashboard
+- `Results/site/low_vol_quality_momentum/index.html` — generated low-volatility quality momentum dashboard
 
 ## 📊 Results & Comparison
 
@@ -197,6 +232,7 @@ The full pipeline now runs:
 - `large_cap_100`
 - `sector_balanced_100`
 - `etf_dual_momentum`
+- `low_vol_quality_momentum`
 
 Open the default page:
 ```bash
@@ -212,6 +248,11 @@ Results/site/sector_balanced_100/index.html
 Open the ETF dual momentum page:
 ```bash
 Results/site/etf_dual_momentum/index.html
+```
+
+Open the low-volatility quality momentum page:
+```bash
+Results/site/low_vol_quality_momentum/index.html
 ```
 
 Read the direct comparison table:
@@ -241,6 +282,7 @@ Parquet files or Python tables manually.
 - **交易成本压力测试**: checks whether the strategy still looks acceptable after adding trading costs.
 - **股票池对比**: compares the original 50-stock universe with the expanded and sector-balanced universes.
 - **ETF 双动量看板**: shows the current ETF target, recent monthly rotations, equity curve, drawdown, and transaction-cost sensitivity.
+- **低波动质量动量看板**: shows the current defensive stock candidates, quality coverage, cash reserve, equity curve, drawdown, and transaction-cost sensitivity.
 
 ### Automatic stock-selection rules
 
@@ -252,6 +294,19 @@ The latest-selection report uses these rules:
    - trades above its 200-day moving average,
    - is not in the highest-volatility group based on recent 63 trading days.
 4. Split the conservative candidates into equal weights for reference.
+
+### Defensive stock-selection rules
+
+The low-volatility quality momentum dashboard uses these rules:
+
+1. Start from the sector-balanced 100-stock universe.
+2. Keep stocks with positive 12–1 momentum.
+3. Keep stocks above the 200-day moving average.
+4. Keep stocks outside the high-volatility group based on recent 126 trading days.
+5. Rank by momentum plus low volatility.
+6. Overlay the latest fundamental quality score.
+7. Select up to 8 defensive candidates and assign equal reference weights.
+8. If too few stocks pass, reserve the remaining weight as cash.
 
 ### Important warning
 

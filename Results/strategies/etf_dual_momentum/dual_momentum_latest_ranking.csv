@@ -2,5 +2,5 @@ signal_date,ticker,rank,momentum_6m,selected,target_weight,role
 2026-06-23,IWM,1,0.2046996882946186,True,1.0,risk_asset
 2026-06-23,QQQ,2,0.16445305789329812,False,0.0,risk_asset
 2026-06-23,SPY,3,0.08147357852604165,False,0.0,risk_asset
-2026-06-23,TLT,4,0.007690476579084171,False,0.0,risk_asset
+2026-06-23,TLT,4,0.007690566453725678,False,0.0,risk_asset
 2026-06-23,GLD,5,-0.04791701029840245,False,0.0,risk_asset

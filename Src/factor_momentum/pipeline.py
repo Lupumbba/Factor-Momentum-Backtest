@@ -21,6 +21,11 @@ from .config import (
     ETF_DUAL_MOMENTUM_RESULTS_DIR,
     ETF_DUAL_MOMENTUM_SIGNALS_FILE,
     ETF_DUAL_MOMENTUM_SITE_DIR,
+    LOW_VOL_QUALITY_MOMENTUM_NAME,
+    LOW_VOL_QUALITY_RESULTS_DIR,
+    LOW_VOL_QUALITY_SELECTION_FILE,
+    LOW_VOL_QUALITY_SITE_DIR,
+    LOW_VOL_QUALITY_SNAPSHOT_FILE,
     MOMENTUM_SCORES_FILE,
     MONTH_END_PRICES_FILE,
     PRICES_FILE,
@@ -52,11 +57,13 @@ from .data_clean import clean_prices
 from .data_fetch import fetch_prices
 from .etf_dual_momentum_report import build_etf_dual_momentum_site
 from .evaluate import export_cost_grid_report
+from .low_vol_quality_report import build_low_vol_quality_site
 from .portfolio import build_and_save_weights
 from .returns import compute_and_save_returns
 from .selection import build_and_save_latest_selection
 from .signals.momentum_12_1 import build_and_save_momentum_scores
 from .strategies.etf_dual_momentum import run_strategy as run_etf_dual_momentum_strategy
+from .strategies.low_vol_quality_momentum import run_strategy as run_low_vol_quality_momentum_strategy
 from .web_report import build_site
 
 
@@ -256,6 +263,23 @@ def _build_etf_dual_momentum_site() -> None:
     print(f"Saved ETF dual momentum website: {out_path}")
 
 
+def _build_low_vol_quality_site() -> None:
+    out_path: Path = build_low_vol_quality_site(
+        LOW_VOL_QUALITY_RESULTS_DIR,
+        LOW_VOL_QUALITY_SITE_DIR,
+        LOW_VOL_QUALITY_SELECTION_FILE,
+        LOW_VOL_QUALITY_SNAPSHOT_FILE,
+        COST_GRID_METRICS_FILE,
+        EQUITY_CURVE_FILE,
+        STRATEGY_RETURNS_FILE,
+        SITE_INDEX_FILE,
+        SITE_BASE_COST_BPS,
+        SITE_CHART_POINTS,
+        LOW_VOL_QUALITY_MOMENTUM_NAME,
+    )
+    print(f"Saved low-vol quality website: {out_path}")
+
+
 def main() -> None:
     summaries: list[UniverseSummary] = []
     for slug in UNIVERSE_ORDER:
@@ -268,6 +292,8 @@ def main() -> None:
     _build_all_sites(comparison_path)
     run_etf_dual_momentum_strategy()
     _build_etf_dual_momentum_site()
+    run_low_vol_quality_momentum_strategy()
+    _build_low_vol_quality_site()
 
 
 if __name__ == "__main__":

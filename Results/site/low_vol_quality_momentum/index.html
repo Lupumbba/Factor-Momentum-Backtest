@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>低波动质量动量看板</title>
+  <style>
+    :root {
+      --ink: #17201d;
+      --muted: #5f6862;
+      --paper: #f4f5ef;
+      --panel: #ffffff;
+      --line: #d7ddd4;
+      --green: #0a735f;
+      --green-soft: #dcefe8;
+      --blue: #31589a;
+      --blue-soft: #e1e8f8;
+      --gold: #9a641c;
+      --gold-soft: #f2e4ce;
+      --red: #b33d4b;
+      --red-soft: #f4dce0;
+      --shadow: 0 16px 42px rgba(23, 32, 29, 0.08);
+    }
+
+    * { box-sizing: border-box; letter-spacing: 0; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(10, 115, 95, 0.08) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(49, 88, 154, 0.06) 1px, transparent 1px),
+        var(--paper);
+      background-size: 30px 30px;
+      font-family: "Avenir Next", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+
+    .shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 30px 0 44px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 20px;
+      align-items: end;
+      padding-bottom: 18px;
+      border-bottom: 2px solid var(--ink);
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--green);
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 820px;
+      font-family: "Baskerville", "Songti SC", "STSong", serif;
+      font-size: 2.45rem;
+      line-height: 1.08;
+    }
+
+    .stamp {
+      display: grid;
+      gap: 6px;
+      justify-items: end;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .stamp strong {
+      color: var(--ink);
+      font-size: 1.12rem;
+    }
+
+    .notice {
+      margin: 18px 0;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--gold);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.76);
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 20px 0;
+    }
+
+    .kpi {
+      min-height: 118px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .kpi span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.84rem;
+      font-weight: 800;
+    }
+
+    .kpi strong {
+      display: block;
+      margin-top: 12px;
+      font-size: 2rem;
+      line-height: 1;
+    }
+
+    .kpi small {
+      display: block;
+      margin-top: 10px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .grid-two {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 1.05rem;
+      line-height: 1.2;
+    }
+
+    .panel-subtitle {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.55;
+    }
+
+    .candidate-list {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+    }
+
+    .stock-row {
+      display: grid;
+      grid-template-columns: 86px 1fr auto;
+      gap: 14px;
+      align-items: center;
+      min-height: 78px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .ticker {
+      font-size: 1.32rem;
+      font-weight: 900;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.55;
+    }
+
+    .weight {
+      min-width: 86px;
+      text-align: right;
+      font-weight: 900;
+      color: var(--green);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 28px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .badge.primary {
+      color: var(--green);
+      background: var(--green-soft);
+    }
+
+    .badge.watch {
+      color: var(--blue);
+      background: var(--blue-soft);
+    }
+
+    .badge.risk {
+      color: var(--gold);
+      background: var(--gold-soft);
+    }
+
+    .badge.avoid {
+      color: var(--red);
+      background: var(--red-soft);
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .chart-box {
+      min-height: 330px;
+      padding: 16px;
+    }
+
+    .chart {
+      width: 100%;
+      min-height: 250px;
+    }
+
+    .chart svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      min-width: 840px;
+      border-collapse: collapse;
+      background: #fff;
+    }
+
+    th, td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+      font-size: 0.9rem;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      background: #fafbf8;
+    }
+
+    td.numeric, th.numeric {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .rules {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .rule {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.86);
+    }
+
+    .rule strong {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .rule p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    @media (max-width: 880px) {
+      .topbar,
+      .grid-two,
+      .chart-grid,
+      .rules {
+        grid-template-columns: 1fr;
+      }
+
+      .stamp {
+        justify-items: start;
+      }
+
+      .kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 560px) {
+      .shell {
+        width: min(100% - 20px, 1180px);
+        padding-top: 16px;
+      }
+
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stock-row {
+        grid-template-columns: 1fr;
+      }
+
+      .weight {
+        text-align: left;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">低波动质量动量 · 月度防守选股</p>
+        <h1>先排除高波动和趋势破坏，再用质量因子筛出更稳的强势股</h1>
+      </div>
+      <div class="stamp">
+        <span>信号日期</span>
+        <strong id="signalDate">--</strong>
+        <span id="generatedAt">--</span>
+      </div>
+    </header>
+
+    <section class="notice">
+      历史回测只使用当时已经可见的价格数据；最新候选名单再叠加当前基本面质量快照。这样可以避免把今天看到的基本面数据回填到过去。
+    </section>
+
+    <section class="kpi-grid" aria-label="核心指标">
+      <div class="kpi">
+        <span>当前优先研究</span>
+        <strong id="candidateCount">--</strong>
+        <small>通过低波动、趋势、动量和质量过滤</small>
+      </div>
+      <div class="kpi">
+        <span>现金预留</span>
+        <strong id="cashWeight">--</strong>
+        <small>候选股不足时保留现金，避免硬凑满仓</small>
+      </div>
+      <div class="kpi">
+        <span id="sharpeLabel">回测 Sharpe</span>
+        <strong id="sharpeValue">--</strong>
+        <small>历史段为价格规则防守版</small>
+      </div>
+      <div class="kpi">
+        <span>历史最大回撤</span>
+        <strong id="drawdownValue">--</strong>
+        <small>用于衡量历史压力</small>
+      </div>
+    </section>
+
+    <section class="grid-two">
+      <article class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">当前防守候选</h2>
+          <p class="panel-subtitle">参考仓位按候选股数量自动计算，候选不足时剩余部分保持现金。</p>
+        </div>
+        <div class="candidate-list" id="candidateList"></div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">质量覆盖</h2>
+          <p class="panel-subtitle" id="qualitySubtitle">--</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="numeric">排名</th>
+                <th>股票</th>
+                <th>行业</th>
+                <th class="numeric">质量分</th>
+                <th class="numeric">动量</th>
+                <th class="numeric">波动</th>
+                <th>状态</th>
+              </tr>
+            </thead>
+            <tbody id="rankingTable"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <section class="chart-grid">
+      <article class="panel chart-box">
+        <div class="panel-header">
+          <h2 class="panel-title">策略净值曲线</h2>
+          <p class="panel-subtitle" id="equitySubtitle">--</p>
+        </div>
+        <div class="chart" id="equityChart"></div>
+      </article>
+
+      <article class="panel chart-box">
+        <div class="panel-header">
+          <h2 class="panel-title">历史回撤</h2>
+          <p class="panel-subtitle">越接近 0 表示回撤越浅，向下越多表示历史压力越大。</p>
+        </div>
+        <div class="chart" id="drawdownChart"></div>
+      </article>
+    </section>
+
+    <section class="grid-two">
+      <article class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">交易成本压力测试</h2>
+          <p class="panel-subtitle">同一套价格防守规则，在不同交易成本假设下的表现。</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="numeric">成本</th>
+                <th class="numeric">累计收益</th>
+                <th class="numeric">年化收益</th>
+                <th class="numeric">年化波动</th>
+                <th class="numeric">Sharpe</th>
+                <th class="numeric">最大回撤</th>
+              </tr>
+            </thead>
+            <tbody id="costTable"></tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">规则边界</h2>
+          <p class="panel-subtitle">这套防守版优先控制风险，再寻找仍有趋势的股票。</p>
+        </div>
+        <div class="rules">
+          <div class="rule">
+            <strong>趋势未破</strong>
+            <p>只考虑 12-1 动量为正、并且价格站上 200 日均线的股票。</p>
+          </div>
+          <div class="rule">
+            <strong>波动不过高</strong>
+            <p>剔除近期波动处于股票池高位的股票，减少追涨回撤风险。</p>
+          </div>
+          <div class="rule">
+            <strong>质量过线</strong>
+            <p>用盈利能力、现金流收益和负债压力组成质量分，当前名单必须过线。</p>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script id="dashboard-data" type="application/json">{"strategy_name":"低波动质量动量防守版","signal_date":"2026-06-23","generated_at":"2026-06-24 15:16","base_cost_bps":10,"candidate_count":8,"cash_weight":0.0,"base_metric":{"cost_bps":10,"periods":2631,"total_return":2.155359314959435,"CAGR":0.1163475690986175,"annual_vol":0.1675559296116184,"Sharpe":0.7409117867798581,"max_drawdown":-0.331933023221846},"metrics":[{"cost_bps":0,"periods":2631,"total_return":2.4359456892719393,"CAGR":0.1254937515581806,"annual_vol":0.1675727629086854,"Sharpe":0.7895644690193796,"max_drawdown":-0.3311447721648859},{"cost_bps":10,"periods":2631,"total_return":2.155359314959435,"CAGR":0.1163475690986175,"annual_vol":0.1675559296116184,"Sharpe":0.7409117867798581,"max_drawdown":-0.331933023221846},{"cost_bps":50,"periods":2631,"total_return":1.2425034680041582,"CAGR":0.0804224368342141,"annual_vol":0.1679009744790336,"Sharpe":0.544861743548242,"max_drawdown":-0.3350860274496878}],"quality_summary":{"total_tickers":100,"available_tickers":100,"quality_pass_tickers":50,"quality_threshold":0.4729956117982065},"candidates":[{"signal_date":"2026-06-23","ticker":"AAPL","sector":"Technology","final_rank":1.0,"status":"优先研究","defensive_entry_signal":true,"target_weight":0.125,"cash_weight":0.0,"final_score":0.8261605720600111,"price_composite_score":0.8540000000000001,"quality_score":0.7844014301500276,"quality_pass":true,"momentum_12_1":0.5270166130698164,"annualized_volatility":0.2348879399990389,"latest_price":294.29998779296875,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":1.4147099,"profit_margin":0.27152002,"free_cash_flow_yield":0.023387162421631,"debt_to_market_cap":0.0195977370894729,"reason":"defensive_entry_signal"},{"signal_date":"2026-06-23","ticker":"JNJ","sector":"Healthcare","final_rank":2.0,"status":"优先研究","defensive_entry_signal":true,"target_weight":0.125,"cash_weight":0.0,"final_score":0.7911205937353903,"price_composite_score":0.898,"quality_score":0.6308014843384759,"quality_pass":true,"momentum_12_1":0.5120140143022225,"annualized_volatility":0.1797856586679828,"latest_price":239.0800018310547,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.26416,"profit_margin":0.21834,"free_cash_flow_yield":0.0217393510640708,"debt_to_market_cap":0.0955435915646847,"reason":"defensive_entry_signal"},{"signal_date":"2026-06-23","ticker":"GOOG","sector":"Communication Services","final_rank":3.0,"status":"优先研究","defensive_entry_signal":true,"target_weight":0.125,"cash_weight":0.0,"final_score":0.7716916624165923,"price_composite_score":0.76,"quality_score":0.7892291560414807,"quality_pass":true,"momentum_12_1":1.126827156719513,"annualized_volatility":0.3003332447972475,"latest_price":346.0799865722656,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.38884997,"profit_margin":0.37919,"free_cash_flow_yield":0.0066117244774722,"debt_to_market_cap":0.0227029351815509,"reason":"defensive_entry_signal"},{"signal_date":"2026-06-23","ticker":"EA","sector":"Communication Services","final_rank":5.0,"status":"优先研究","defensive_entry_signal":true,"target_weight":0.125,"cash_weight":0.0,"final_score":0.7543134876110332,"price_composite_score":0.8320000000000001,"quality_score":0.637783719027583,"quality_pass":true,"momentum_12_1":0.2680920732362983,"annualized_volatility":0.0608521991260056,"latest_price":203.52000427246097,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.1349,"profit_margin":0.11778,"free_cash_flow_yield":0.0434841651339992,"debt_to_market_cap":0.0363294733055011,"reason":"defensive_entry_signal"},{"signal_date":"2026-06-23","ticker":"MO","sector":"Consumer Defensive","final_rank":6.0,"status":"优先研究","defensive_entry_signal":true,"target_weight":0.125,"cash_weight":0.0,"final_score":0.7315154121863798,"price_composite_score":0.692,"quality_score":0.7907885304659498,"quality_pass":true,"momentum_12_1":0.2485906197687992,"annualized_volatility":0.2551777201481328,"latest_price":71.61000061035156,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":null,"profit_margin":0.39518002,"free_cash_flow_yield":0.0714401250739949,"debt_to_market_cap":0.2057351750281679,"reason":"defensive_entry_signal"},{"signal_date":"2026-06-23","ticker":"MRK","sector":"Healthcare","final_rank":7.0,"status":"优先研究","defensive_entry_signal":true,"target_weight":0.125,"cash_weight":0.0,"final_score":0.7258817268052191,"price_composite_score":0.806,"quality_score":0.6057043170130477,"quality_pass":true,"momentum_12_1":0.5388208549340074,"annualized_volatility":0.2615590290918608,"latest_price":119.5999984741211,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.18944,"profit_margin":0.13586001,"free_cash_flow_yield":0.0475615376880085,"debt_to_market_cap":0.1662779138284062,"reason":"defensive_entry_signal"},{"signal_date":"2026-06-23","ticker":"TJX","sector":"Consumer Cyclical","final_rank":9.0,"status":"优先研究","defensive_entry_signal":true,"target_weight":0.125,"cash_weight":0.0,"final_score":0.7020912894725658,"price_composite_score":0.798,"quality_score":0.5582282236814144,"quality_pass":true,"momentum_12_1":0.2684570599655973,"annualized_volatility":0.2043100635714475,"latest_price":164.35000610351562,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.6125,"profit_margin":0.09402,"free_cash_flow_yield":0.0237623586249826,"debt_to_market_cap":0.0781016910180643,"reason":"defensive_entry_signal"},{"signal_date":"2026-06-23","ticker":"PLD","sector":"Real Estate","final_rank":10.0,"status":"优先研究","defensive_entry_signal":true,"target_weight":0.125,"cash_weight":0.0,"final_score":0.698444963661864,"price_composite_score":0.832,"quality_score":0.4981124091546601,"quality_pass":true,"momentum_12_1":0.3988833901683757,"annualized_volatility":0.213102526204935,"latest_price":145.25,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.06844,"profit_margin":0.39646,"free_cash_flow_yield":0.0356657549406667,"debt_to_market_cap":0.2594322366700135,"reason":"defensive_entry_signal"}],"rows":[{"signal_date":"2026-06-23","ticker":"AAPL","sector":"Technology","final_rank":1.0,"status":"优先研究","defensive_entry_signal":true,"target_weight":0.125,"cash_weight":0.0,"final_score":0.8261605720600111,"price_composite_score":0.8540000000000001,"quality_score":0.7844014301500276,"quality_pass":true,"momentum_12_1":0.5270166130698164,"annualized_volatility":0.2348879399990389,"latest_price":294.29998779296875,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":1.4147099,"profit_margin":0.27152002,"free_cash_flow_yield":0.023387162421631,"debt_to_market_cap":0.0195977370894729,"reason":"defensive_entry_signal"},{"signal_date":"2026-06-23","ticker":"JNJ","sector":"Healthcare","final_rank":2.0,"status":"优先研究","defensive_entry_signal":true,"target_weight":0.125,"cash_weight":0.0,"final_score":0.7911205937353903,"price_composite_score":0.898,"quality_score":0.6308014843384759,"quality_pass":true,"momentum_12_1":0.5120140143022225,"annualized_volatility":0.1797856586679828,"latest_price":239.0800018310547,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.26416,"profit_margin":0.21834,"free_cash_flow_yield":0.0217393510640708,"debt_to_market_cap":0.0955435915646847,"reason":"defensive_entry_signal"},{"signal_date":"2026-06-23","ticker":"GOOG","sector":"Communication Services","final_rank":3.0,"status":"优先研究","defensive_entry_signal":true,"target_weight":0.125,"cash_weight":0.0,"final_score":0.7716916624165923,"price_composite_score":0.76,"quality_score":0.7892291560414807,"quality_pass":true,"momentum_12_1":1.126827156719513,"annualized_volatility":0.3003332447972475,"latest_price":346.0799865722656,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.38884997,"profit_margin":0.37919,"free_cash_flow_yield":0.0066117244774722,"debt_to_market_cap":0.0227029351815509,"reason":"defensive_entry_signal"},{"signal_date":"2026-06-23","ticker":"EA","sector":"Communication Services","final_rank":5.0,"status":"优先研究","defensive_entry_signal":true,"target_weight":0.125,"cash_weight":0.0,"final_score":0.7543134876110332,"price_composite_score":0.8320000000000001,"quality_score":0.637783719027583,"quality_pass":true,"momentum_12_1":0.2680920732362983,"annualized_volatility":0.0608521991260056,"latest_price":203.52000427246097,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.1349,"profit_margin":0.11778,"free_cash_flow_yield":0.0434841651339992,"debt_to_market_cap":0.0363294733055011,"reason":"defensive_entry_signal"},{"signal_date":"2026-06-23","ticker":"MO","sector":"Consumer Defensive","final_rank":6.0,"status":"优先研究","defensive_entry_signal":true,"target_weight":0.125,"cash_weight":0.0,"final_score":0.7315154121863798,"price_composite_score":0.692,"quality_score":0.7907885304659498,"quality_pass":true,"momentum_12_1":0.2485906197687992,"annualized_volatility":0.2551777201481328,"latest_price":71.61000061035156,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":null,"profit_margin":0.39518002,"free_cash_flow_yield":0.0714401250739949,"debt_to_market_cap":0.2057351750281679,"reason":"defensive_entry_signal"},{"signal_date":"2026-06-23","ticker":"MRK","sector":"Healthcare","final_rank":7.0,"status":"优先研究","defensive_entry_signal":true,"target_weight":0.125,"cash_weight":0.0,"final_score":0.7258817268052191,"price_composite_score":0.806,"quality_score":0.6057043170130477,"quality_pass":true,"momentum_12_1":0.5388208549340074,"annualized_volatility":0.2615590290918608,"latest_price":119.5999984741211,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.18944,"profit_margin":0.13586001,"free_cash_flow_yield":0.0475615376880085,"debt_to_market_cap":0.1662779138284062,"reason":"defensive_entry_signal"},{"signal_date":"2026-06-23","ticker":"TJX","sector":"Consumer Cyclical","final_rank":9.0,"status":"优先研究","defensive_entry_signal":true,"target_weight":0.125,"cash_weight":0.0,"final_score":0.7020912894725658,"price_composite_score":0.798,"quality_score":0.5582282236814144,"quality_pass":true,"momentum_12_1":0.2684570599655973,"annualized_volatility":0.2043100635714475,"latest_price":164.35000610351562,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.6125,"profit_margin":0.09402,"free_cash_flow_yield":0.0237623586249826,"debt_to_market_cap":0.0781016910180643,"reason":"defensive_entry_signal"},{"signal_date":"2026-06-23","ticker":"PLD","sector":"Real Estate","final_rank":10.0,"status":"优先研究","defensive_entry_signal":true,"target_weight":0.125,"cash_weight":0.0,"final_score":0.698444963661864,"price_composite_score":0.832,"quality_score":0.4981124091546601,"quality_pass":true,"momentum_12_1":0.3988833901683757,"annualized_volatility":0.213102526204935,"latest_price":145.25,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.06844,"profit_margin":0.39646,"free_cash_flow_yield":0.0356657549406667,"debt_to_market_cap":0.2594322366700135,"reason":"defensive_entry_signal"},{"signal_date":"2026-06-23","ticker":"GOOGL","sector":"Communication Services","final_rank":4.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.7675540280079901,"price_composite_score":0.754,"quality_score":0.7878850700199753,"quality_pass":true,"momentum_12_1":1.1630669793990496,"annualized_volatility":0.304765692865214,"latest_price":346.1300048828125,"above_sma":true,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.38884997,"profit_margin":0.37919,"free_cash_flow_yield":0.0066107687512785,"debt_to_market_cap":0.0226996534673928,"reason":"above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"NEM","sector":"Basic Materials","final_rank":8.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.7136030196778443,"price_composite_score":0.598,"quality_score":0.8870075491946109,"quality_pass":true,"momentum_12_1":0.9048672526843372,"annualized_volatility":0.5298200172571121,"latest_price":97.83999633789062,"above_sma":false,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.25832,"profit_margin":0.3387,"free_cash_flow_yield":0.0938720425287012,"debt_to_market_cap":0.0529634672991708,"reason":"below_200d_sma;above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"NVDA","sector":"Technology","final_rank":11.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.6788482000935017,"price_composite_score":0.542,"quality_score":0.884120500233754,"quality_pass":true,"momentum_12_1":0.3366357967173168,"annualized_volatility":0.3814710939423471,"latest_price":200.0399932861328,"above_sma":true,"volatility_ok":false,"price_eligible":false,"return_on_equity":1.14288,"profit_margin":0.62966,"free_cash_flow_yield":0.0095633145861363,"debt_to_market_cap":0.0026446963515154,"reason":"above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"KO","sector":"Consumer Defensive","final_rank":12.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.6731142356241233,"price_composite_score":0.714,"quality_score":0.6117855890603086,"quality_pass":true,"momentum_12_1":0.1410095577165051,"annualized_volatility":0.180936284760653,"latest_price":80.30999755859375,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.43372002,"profit_margin":0.278,"free_cash_flow_yield":0.0090418450245338,"debt_to_market_cap":0.1292122020963675,"reason":"outside_top_candidates"},{"signal_date":"2026-06-23","ticker":"AVGO","sector":"Technology","final_rank":13.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.6454992456117983,"price_composite_score":0.5800000000000001,"quality_score":0.7437481140294955,"quality_pass":true,"momentum_12_1":0.6300832950718076,"annualized_volatility":0.4695544228047609,"latest_price":380.1499938964844,"above_sma":true,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.37280998,"profit_margin":0.38848,"free_cash_flow_yield":0.0150460785874355,"debt_to_market_cap":0.0358880975858351,"reason":"above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"LLY","sector":"Healthcare","final_rank":14.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.6395125419694845,"price_composite_score":0.574,"quality_score":0.7377813549237111,"quality_pass":true,"momentum_12_1":0.4275482772696997,"annualized_volatility":0.3834336963576583,"latest_price":1107.0799560546875,"above_sma":true,"volatility_ok":false,"price_eligible":false,"return_on_equity":1.07459,"profit_margin":0.34986,"free_cash_flow_yield":0.0092750515320747,"debt_to_market_cap":0.0439310439401592,"reason":"above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"CSCO","sector":"Technology","final_rank":15.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.6328065599897997,"price_composite_score":0.6419999999999999,"quality_score":0.6190163999744995,"quality_pass":true,"momentum_12_1":0.7756089713662806,"annualized_volatility":0.3848176662610433,"latest_price":121.1500015258789,"above_sma":true,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.25229,"profit_margin":0.19685,"free_cash_flow_yield":0.0194518993754584,"debt_to_market_cap":0.069111349348661,"reason":"above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"EQIX","sector":"Real Estate","final_rank":16.0,"status":"价格通过但质量不足","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.6116386076756344,"price_composite_score":0.772,"quality_score":0.3710965191890858,"quality_pass":false,"momentum_12_1":0.3731894987395587,"annualized_volatility":0.2444828402487429,"latest_price":1115.9300537109375,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.10059,"profit_margin":0.14928001,"free_cash_flow_yield":0.0247608633111731,"debt_to_market_cap":0.2120341151719212,"reason":"quality_score_below_threshold"},{"signal_date":"2026-06-23","ticker":"LIN","sector":"Basic Materials","final_rank":17.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.6083588189043307,"price_composite_score":0.626,"quality_score":0.581897047260827,"quality_pass":true,"momentum_12_1":0.0716557696404878,"annualized_volatility":0.1840170685242479,"latest_price":512.260009765625,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.18229,"profit_margin":0.20436001,"free_cash_flow_yield":0.0198212282672082,"debt_to_market_cap":0.1111162628694998,"reason":"outside_top_candidates"},{"signal_date":"2026-06-23","ticker":"PFE","sector":"Healthcare","final_rank":18.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.6012732904075822,"price_composite_score":0.71,"quality_score":0.4381832260189553,"quality_pass":false,"momentum_12_1":0.1555070202860646,"annualized_volatility":0.2021625655570352,"latest_price":24.719999313354492,"above_sma":false,"volatility_ok":true,"price_eligible":false,"return_on_equity":0.083100006,"profit_margin":0.118310004,"free_cash_flow_yield":0.0878458539276465,"debt_to_market_cap":0.4594426973300839,"reason":"quality_score_below_threshold;below_200d_sma"},{"signal_date":"2026-06-23","ticker":"CVX","sector":"Energy","final_rank":19.0,"status":"价格通过但质量不足","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5999853074928811,"price_composite_score":0.732,"quality_score":0.4019632687322028,"quality_pass":false,"momentum_12_1":0.3276202479730188,"annualized_volatility":0.2571006660134493,"latest_price":175.97999572753906,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.06638,"profit_margin":0.059270002,"free_cash_flow_yield":0.0336009310907921,"debt_to_market_cap":0.1296160227497751,"reason":"quality_score_below_threshold"},{"signal_date":"2026-06-23","ticker":"ABBV","sector":"Healthcare","final_rank":20.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5984301075268817,"price_composite_score":0.62,"quality_score":0.5660752688172043,"quality_pass":true,"momentum_12_1":0.2111460251766639,"annualized_volatility":0.270502762010425,"latest_price":234.7599945068359,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":null,"profit_margin":0.05786,"free_cash_flow_yield":0.0501760271989426,"debt_to_market_cap":0.1757880389592383,"reason":"outside_top_candidates"},{"signal_date":"2026-06-23","ticker":"EOG","sector":"Energy","final_rank":21.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5950021930383782,"price_composite_score":0.524,"quality_score":0.7015054825959455,"quality_pass":true,"momentum_12_1":0.1548664177480612,"annualized_volatility":0.2933158205647684,"latest_price":134.89999389648438,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.18195,"profit_margin":0.23322001,"free_cash_flow_yield":0.0398634202342597,"debt_to_market_cap":0.1155993891650912,"reason":"outside_top_candidates"},{"signal_date":"2026-06-23","ticker":"CAT","sector":"Industrials","final_rank":22.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5924914233499086,"price_composite_score":0.648,"quality_score":0.5092285583747715,"quality_pass":true,"momentum_12_1":1.280593541378055,"annualized_volatility":0.4013782986570497,"latest_price":984.239990234375,"above_sma":true,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.51331,"profit_margin":0.13328,"free_cash_flow_yield":0.0083307958821944,"debt_to_market_cap":0.0949985926616303,"reason":"above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"V","sector":"Financial Services","final_rank":23.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5913215861277572,"price_composite_score":0.424,"quality_score":0.8423039653193931,"quality_pass":true,"momentum_12_1":-0.0735449685487461,"annualized_volatility":0.2389173698514919,"latest_price":328.4800109863281,"above_sma":true,"volatility_ok":true,"price_eligible":false,"return_on_equity":0.60349,"profit_margin":0.51679003,"free_cash_flow_yield":0.0333604223182829,"debt_to_market_cap":0.0383809538284675,"reason":"nonpositive_momentum"},{"signal_date":"2026-06-23","ticker":"AMGN","sector":"Healthcare","final_rank":24.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5882017127799737,"price_composite_score":0.624,"quality_score":0.5345042819499342,"quality_pass":true,"momentum_12_1":0.2424812889276881,"annualized_volatility":0.2762639763970754,"latest_price":347.010009765625,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":1.01318,"profit_margin":0.20955999,"free_cash_flow_yield":0.0397077052597433,"debt_to_market_cap":0.3060749752491466,"reason":"outside_top_candidates"},{"signal_date":"2026-06-23","ticker":"XOM","sector":"Energy","final_rank":25.0,"status":"价格通过但质量不足","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.584946058056016,"price_composite_score":0.6819999999999999,"quality_score":0.43936514514004,"quality_pass":false,"momentum_12_1":0.3904482695236038,"annualized_volatility":0.2929991700803604,"latest_price":139.72999572753906,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.09873,"profit_margin":0.077649996,"free_cash_flow_yield":0.0200812022502779,"debt_to_market_cap":0.0822914033470604,"reason":"quality_score_below_threshold"},{"signal_date":"2026-06-23","ticker":"SLB","sector":"Energy","final_rank":26.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5847479025882953,"price_composite_score":0.646,"quality_score":0.4928697564707382,"quality_pass":true,"momentum_12_1":0.6493417066305169,"annualized_volatility":0.3778437723048613,"latest_price":47.790000915527344,"above_sma":true,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.14066,"profit_margin":0.09263,"free_cash_flow_yield":0.0425916847172675,"debt_to_market_cap":0.1627598896692853,"reason":"above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"MS","sector":"Financial Services","final_rank":27.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5820492377188029,"price_composite_score":0.672,"quality_score":0.4471230942970073,"quality_pass":false,"momentum_12_1":0.5122845562567244,"annualized_volatility":0.3048120047149324,"latest_price":226.02999877929688,"above_sma":true,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.16388,"profit_margin":0.24753,"free_cash_flow_yield":null,"debt_to_market_cap":1.6254970273259906,"reason":"quality_score_below_threshold;above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"VLO","sector":"Energy","final_rank":28.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5810686875770326,"price_composite_score":0.6359999999999999,"quality_score":0.4986717189425814,"quality_pass":true,"momentum_12_1":0.8679064018992322,"annualized_volatility":0.3934471080104417,"latest_price":243.67999267578125,"above_sma":true,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.1585,"profit_margin":0.03569,"free_cash_flow_yield":0.0661532814836871,"debt_to_market_cap":0.1588107225626911,"reason":"above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"PEP","sector":"Consumer Defensive","final_rank":29.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5778687109524416,"price_composite_score":0.656,"quality_score":0.4606717773811042,"quality_pass":false,"momentum_12_1":0.1234335754539415,"annualized_volatility":0.2124705485562208,"latest_price":142.0500030517578,"above_sma":false,"volatility_ok":true,"price_eligible":false,"return_on_equity":0.43879002,"profit_margin":0.09149,"free_cash_flow_yield":0.0450433736395532,"debt_to_market_cap":0.2715503173538941,"reason":"quality_score_below_threshold;below_200d_sma"},{"signal_date":"2026-06-23","ticker":"AEP","sector":"Utilities","final_rank":30.0,"status":"价格通过但质量不足","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5778406562114837,"price_composite_score":0.792,"quality_score":0.2566016405287092,"quality_pass":false,"momentum_12_1":0.2594583269233512,"annualized_volatility":0.1927512191321846,"latest_price":133.74000549316406,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.12585,"profit_margin":0.16289,"free_cash_flow_yield":-0.0955556242581944,"debt_to_market_cap":0.7119553586576076,"reason":"quality_score_below_threshold"},{"signal_date":"2026-06-23","ticker":"MCD","sector":"Consumer Cyclical","final_rank":31.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5762924731182796,"price_composite_score":0.554,"quality_score":0.6097311827956989,"quality_pass":true,"momentum_12_1":-0.0277990857848596,"annualized_volatility":0.1752781293616058,"latest_price":271.6600036621094,"above_sma":false,"volatility_ok":true,"price_eligible":false,"return_on_equity":null,"profit_margin":0.31618,"free_cash_flow_yield":0.0308381129473532,"debt_to_market_cap":0.2844064514327298,"reason":"nonpositive_momentum;below_200d_sma"},{"signal_date":"2026-06-23","ticker":"NEE","sector":"Utilities","final_rank":32.0,"status":"价格通过但质量不足","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5751494644906285,"price_composite_score":0.76,"quality_score":0.2978736612265714,"quality_pass":false,"momentum_12_1":0.280301374302736,"annualized_volatility":0.237381870990636,"latest_price":86.43000030517578,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.10325,"profit_margin":0.29369,"free_cash_flow_yield":-0.1023715253085584,"debt_to_market_cap":0.5791837270026308,"reason":"quality_score_below_threshold"},{"signal_date":"2026-06-23","ticker":"RTX","sector":"Industrials","final_rank":33.0,"status":"价格通过但质量不足","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5663324259424539,"price_composite_score":0.6659999999999999,"quality_score":0.4168310648561349,"quality_pass":false,"momentum_12_1":0.2499883751125067,"annualized_volatility":0.2703272241014449,"latest_price":186.38999938964844,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.11571,"profit_margin":0.080290005,"free_cash_flow_yield":0.0288172728567501,"debt_to_market_cap":0.1551143767641589,"reason":"quality_score_below_threshold"},{"signal_date":"2026-06-23","ticker":"BAC","sector":"Financial Services","final_rank":34.0,"status":"价格通过但质量不足","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.557176811594203,"price_composite_score":0.6180000000000001,"quality_score":0.4659420289855072,"quality_pass":false,"momentum_12_1":0.1084425476421389,"annualized_volatility":0.234593978738272,"latest_price":57.90999984741211,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.10644,"profit_margin":0.28956,"free_cash_flow_yield":null,"debt_to_market_cap":1.9464037042125284,"reason":"quality_score_below_threshold"},{"signal_date":"2026-06-23","ticker":"FCX","sector":"Basic Materials","final_rank":35.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5560396765693401,"price_composite_score":0.552,"quality_score":0.56209919142335,"quality_pass":true,"momentum_12_1":0.5334277904355595,"annualized_volatility":0.535640127028078,"latest_price":64.4000015258789,"above_sma":true,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.15630999,"profit_margin":0.10344,"free_cash_flow_yield":0.018469389233643,"debt_to_market_cap":0.1123474710051118,"reason":"above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"COP","sector":"Energy","final_rank":36.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5546360151302647,"price_composite_score":0.582,"quality_score":0.5135900378256619,"quality_pass":true,"momentum_12_1":0.3122119630487057,"annualized_volatility":0.3206998992643762,"latest_price":109.97000122070312,"above_sma":true,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.112840004,"profit_margin":0.12331,"free_cash_flow_yield":0.0394782125886462,"debt_to_market_cap":0.174113546470209,"reason":"above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"MA","sector":"Financial Services","final_rank":37.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5540645862552596,"price_composite_score":0.396,"quality_score":0.7911614656381487,"quality_pass":true,"momentum_12_1":-0.1157456749935893,"annualized_volatility":0.2409417393657828,"latest_price":488.0700073242187,"above_sma":false,"volatility_ok":true,"price_eligible":false,"return_on_equity":2.32076,"profit_margin":0.45876,"free_cash_flow_yield":0.0374448572571582,"debt_to_market_cap":0.0439651333930564,"reason":"nonpositive_momentum;below_200d_sma"},{"signal_date":"2026-06-23","ticker":"GS","sector":"Financial Services","final_rank":38.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5504946357989836,"price_composite_score":0.62,"quality_score":0.4462365894974591,"quality_pass":false,"momentum_12_1":0.4717266799642789,"annualized_volatility":0.3283457001592383,"latest_price":1094.43994140625,"above_sma":true,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.14548,"profit_margin":0.29363,"free_cash_flow_yield":null,"debt_to_market_cap":2.6006517511613296,"reason":"quality_score_below_threshold;above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"WMT","sector":"Consumer Defensive","final_rank":39.0,"status":"价格通过但质量不足","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5483284924986187,"price_composite_score":0.624,"quality_score":0.4348212312465468,"quality_pass":false,"momentum_12_1":0.1936773335292951,"annualized_volatility":0.2614731676067546,"latest_price":119.41999816894533,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.24132,"profit_margin":0.03135,"free_cash_flow_yield":0.0072207319673451,"debt_to_market_cap":0.0794914513564625,"reason":"quality_score_below_threshold"},{"signal_date":"2026-06-23","ticker":"SRE","sector":"Utilities","final_rank":40.0,"status":"价格通过但质量不足","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5398232075311318,"price_composite_score":0.73,"quality_score":0.2545580188278295,"quality_pass":false,"momentum_12_1":0.2017790216419961,"annualized_volatility":0.2038608097395502,"latest_price":92.29000091552734,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.05689,"profit_margin":0.1443,"free_cash_flow_yield":-0.4681429984756772,"debt_to_market_cap":0.6038886524720616,"reason":"quality_score_below_threshold"},{"signal_date":"2026-06-23","ticker":"JPM","sector":"Financial Services","final_rank":41.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5375942028985508,"price_composite_score":0.53,"quality_score":0.5489855072463768,"quality_pass":true,"momentum_12_1":0.052502408101523,"annualized_volatility":0.2421884801768444,"latest_price":334.1400146484375,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.16465001,"profit_margin":0.33936,"free_cash_flow_yield":null,"debt_to_market_cap":1.475547701633496,"reason":"outside_top_candidates"},{"signal_date":"2026-06-23","ticker":"PG","sector":"Consumer Defensive","final_rank":42.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5369835862127588,"price_composite_score":0.462,"quality_score":0.6494589655318967,"quality_pass":true,"momentum_12_1":-0.0729993863577515,"annualized_volatility":0.2132417746013099,"latest_price":150.86000061035156,"above_sma":true,"volatility_ok":true,"price_eligible":false,"return_on_equity":0.31112,"profit_margin":0.19162,"free_cash_flow_yield":0.0362482883412721,"debt_to_market_cap":0.105399362162268,"reason":"nonpositive_momentum"},{"signal_date":"2026-06-23","ticker":"AMZN","sector":"Consumer Cyclical","final_rank":43.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.529086367886438,"price_composite_score":0.536,"quality_score":0.5187159197160951,"quality_pass":true,"momentum_12_1":0.2336023310149442,"annualized_volatility":0.3067180506859576,"latest_price":234.11000061035156,"above_sma":true,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.24285,"profit_margin":0.12224,"free_cash_flow_yield":0.0038940722590754,"debt_to_market_cap":0.0935296109051039,"reason":"above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"GE","sector":"Industrials","final_rank":44.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5282315440520209,"price_composite_score":0.51,"quality_score":0.5555788601300522,"quality_pass":true,"momentum_12_1":0.2645155415257356,"annualized_volatility":0.380324089246848,"latest_price":356.4700012207031,"above_sma":true,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.45428002,"profit_margin":0.17863001,"free_cash_flow_yield":0.0152181319578032,"debt_to_market_cap":0.057245204787668,"reason":"above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"CL","sector":"Consumer Defensive","final_rank":45.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5274025904203323,"price_composite_score":0.492,"quality_score":0.5805064760508308,"quality_pass":true,"momentum_12_1":0.0165900062569213,"annualized_volatility":0.2457300773867211,"latest_price":91.43000030517578,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":3.6357698,"profit_margin":0.10041001,"free_cash_flow_yield":0.0453723426024295,"debt_to_market_cap":0.1089783680654774,"reason":"outside_top_candidates"},{"signal_date":"2026-06-23","ticker":"KMI","sector":"Energy","final_rank":46.0,"status":"价格通过但质量不足","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5239775957329253,"price_composite_score":0.6240000000000001,"quality_score":0.3739439893323133,"quality_pass":false,"momentum_12_1":0.1009739997813574,"annualized_volatility":0.2081561748243862,"latest_price":32.540000915527344,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.10597,"profit_margin":0.18917,"free_cash_flow_yield":0.0227482015460008,"debt_to_market_cap":0.4448460528242414,"reason":"quality_score_below_threshold"},{"signal_date":"2026-06-23","ticker":"COST","sector":"Consumer Defensive","final_rank":47.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5223506863870118,"price_composite_score":0.512,"quality_score":0.5378767159675294,"quality_pass":true,"momentum_12_1":-0.0285236813499278,"annualized_volatility":0.2048083716047763,"latest_price":957.6799926757812,"above_sma":true,"volatility_ok":true,"price_eligible":false,"return_on_equity":0.29152,"profit_margin":0.0301,"free_cash_flow_yield":0.016374377996697,"debt_to_market_cap":0.0240822690626484,"reason":"nonpositive_momentum"},{"signal_date":"2026-06-23","ticker":"VZ","sector":"Communication Services","final_rank":48.0,"status":"价格通过但质量不足","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5209651600153002,"price_composite_score":0.61,"quality_score":0.3874129000382507,"quality_pass":false,"momentum_12_1":0.1793796701227512,"annualized_volatility":0.2654770316027057,"latest_price":46.72999954223633,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.17198,"profit_margin":0.12462,"free_cash_flow_yield":0.1004925745309425,"debt_to_market_cap":1.0297100210455323,"reason":"quality_score_below_threshold"},{"signal_date":"2026-06-23","ticker":"D","sector":"Utilities","final_rank":49.0,"status":"价格通过但质量不足","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.52070609885673,"price_composite_score":0.7020000000000001,"quality_score":0.2487652471418249,"quality_pass":false,"momentum_12_1":0.2366666424707004,"annualized_volatility":0.237391977860644,"latest_price":68.44999694824219,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.09787,"profit_margin":0.16929,"free_cash_flow_yield":-0.1652461129329502,"debt_to_market_cap":0.8673043719762277,"reason":"quality_score_below_threshold"},{"signal_date":"2026-06-23","ticker":"MPC","sector":"Energy","final_rank":50.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.5023332802074036,"price_composite_score":0.62,"quality_score":0.325833200518509,"quality_pass":false,"momentum_12_1":0.5269319116901381,"annualized_volatility":0.3654993946231742,"latest_price":248.52000427246097,"above_sma":true,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.27458,"profit_margin":0.03407,"free_cash_flow_yield":0.0484996321045763,"debt_to_market_cap":0.4731220961158621,"reason":"quality_score_below_threshold;above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"BLK","sector":"Financial Services","final_rank":51.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.4981442326490714,"price_composite_score":0.396,"quality_score":0.6513605816226784,"quality_pass":true,"momentum_12_1":0.01293886923835,"annualized_volatility":0.2928124746116561,"latest_price":1015.3300170898438,"above_sma":false,"volatility_ok":true,"price_eligible":false,"return_on_equity":0.118990004,"profit_margin":0.24396999,"free_cash_flow_yield":0.0428339278885937,"debt_to_market_cap":0.0905077355931618,"reason":"below_200d_sma"},{"signal_date":"2026-06-23","ticker":"LMT","sector":"Industrials","final_rank":52.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.4952344043520761,"price_composite_score":0.532,"quality_score":0.4400860108801904,"quality_pass":false,"momentum_12_1":0.1685752989085236,"annualized_volatility":0.2944891951520841,"latest_price":503.6700134277344,"above_sma":false,"volatility_ok":true,"price_eligible":false,"return_on_equity":0.6764,"profit_margin":0.06382,"free_cash_flow_yield":0.0343338869595808,"debt_to_market_cap":0.1782257786326945,"reason":"quality_score_below_threshold;below_200d_sma"},{"signal_date":"2026-06-23","ticker":"OXY","sector":"Energy","final_rank":53.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.4941949997874963,"price_composite_score":0.536,"quality_score":0.4314874994687407,"quality_pass":false,"momentum_12_1":0.369563323447835,"annualized_volatility":0.3859257106071557,"latest_price":52.22999954223633,"above_sma":true,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.04053,"profit_margin":0.22421,"free_cash_flow_yield":0.0583905386236385,"debt_to_market_cap":0.3197511891659489,"reason":"quality_score_below_threshold;above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"DD","sector":"Basic Materials","final_rank":54.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.4893542096986696,"price_composite_score":0.6679999999999999,"quality_score":0.2213855242466743,"quality_pass":false,"momentum_12_1":0.7318710174599576,"annualized_volatility":0.340169147172647,"latest_price":140.00999450683594,"above_sma":true,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.00896,"profit_margin":-0.00419,"free_cash_flow_yield":-0.0197973292794361,"debt_to_market_cap":0.5105251064121604,"reason":"quality_score_below_threshold;above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"DUK","sector":"Utilities","final_rank":55.0,"status":"价格通过但质量不足","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.4832780377406604,"price_composite_score":0.648,"quality_score":0.2361950943516511,"quality_pass":false,"momentum_12_1":0.076429494810825,"annualized_volatility":0.157233207418489,"latest_price":125.0500030517578,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.09661,"profit_margin":0.15706,"free_cash_flow_yield":-0.0230437420113335,"debt_to_market_cap":0.935587157900628,"reason":"quality_score_below_threshold"},{"signal_date":"2026-06-23","ticker":"ECL","sector":"Basic Materials","final_rank":56.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.4827604296825195,"price_composite_score":0.466,"quality_score":0.5079010742062986,"quality_pass":true,"momentum_12_1":-0.0423637285850456,"annualized_volatility":0.2269114827291499,"latest_price":268.6600036621094,"above_sma":false,"volatility_ok":true,"price_eligible":false,"return_on_equity":0.22427,"profit_margin":0.12798999,"free_cash_flow_yield":0.0209814029255484,"debt_to_market_cap":0.1225549057683329,"reason":"nonpositive_momentum;below_200d_sma"},{"signal_date":"2026-06-23","ticker":"TMO","sector":"Healthcare","final_rank":57.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.4814469951974159,"price_composite_score":0.514,"quality_score":0.4326174879935399,"quality_pass":false,"momentum_12_1":0.2179019513209581,"annualized_volatility":0.3141033353973863,"latest_price":469.3500061035156,"above_sma":false,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.13523,"profit_margin":0.15151,"free_cash_flow_yield":0.0316512327414089,"debt_to_market_cap":0.2474536635861047,"reason":"quality_score_below_threshold;below_200d_sma;above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"TSLA","sector":"Consumer Cyclical","final_rank":58.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.4805586149007608,"price_composite_score":0.526,"quality_score":0.4123965372519019,"quality_pass":false,"momentum_12_1":0.371875601337793,"annualized_volatility":0.4004921141826061,"latest_price":381.6099853515625,"above_sma":false,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.04901,"profit_margin":0.03946,"free_cash_flow_yield":0.0036644712035559,"debt_to_market_cap":0.011086909709387,"reason":"quality_score_below_threshold;below_200d_sma;above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"HON","sector":"Industrials","final_rank":59.0,"status":"价格通过但质量不足","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.4772890284329976,"price_composite_score":0.532,"quality_score":0.3952225710824939,"quality_pass":false,"momentum_12_1":0.1073478791853399,"annualized_volatility":0.2731826138854583,"latest_price":222.3699951171875,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.24264,"profit_margin":0.1089,"free_cash_flow_yield":0.020842877700552,"debt_to_market_cap":0.2679172578360514,"reason":"quality_score_below_threshold"},{"signal_date":"2026-06-23","ticker":"PSX","sector":"Energy","final_rank":60.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.4705487611033193,"price_composite_score":0.642,"quality_score":0.2133719027582982,"quality_pass":false,"momentum_12_1":0.5248044745874012,"annualized_volatility":0.3263084994505373,"latest_price":170.33999633789062,"above_sma":true,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.14547,"profit_margin":0.03066,"free_cash_flow_yield":-0.0166116925725136,"debt_to_market_cap":0.3971578446925445,"reason":"quality_score_below_threshold;above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"PM","sector":"Consumer Defensive","final_rank":61.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.4703089605734767,"price_composite_score":0.348,"quality_score":0.6537724014336918,"quality_pass":true,"momentum_12_1":0.000893546096836,"annualized_volatility":0.3041211737231724,"latest_price":178.69000244140625,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":null,"profit_margin":0.26742,"free_cash_flow_yield":0.0307909685348267,"debt_to_market_cap":0.1866255335410962,"reason":"outside_top_candidates"},{"signal_date":"2026-06-23","ticker":"ORLY","sector":"Consumer Cyclical","final_rank":62.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.4692888888888888,"price_composite_score":0.4239999999999999,"quality_score":0.5372222222222223,"quality_pass":true,"momentum_12_1":-0.0360590269503947,"annualized_volatility":0.2568536146976437,"latest_price":87.54000091552734,"above_sma":false,"volatility_ok":true,"price_eligible":false,"return_on_equity":null,"profit_margin":0.14303,"free_cash_flow_yield":0.018344476984145,"debt_to_market_cap":0.120354802308756,"reason":"nonpositive_momentum;below_200d_sma"},{"signal_date":"2026-06-23","ticker":"MSFT","sector":"Technology","final_rank":63.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.4581980874665307,"price_composite_score":0.242,"quality_score":0.7824952186663267,"quality_pass":true,"momentum_12_1":-0.0876011411769914,"annualized_volatility":0.3210287368695105,"latest_price":373.94000244140625,"above_sma":false,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.34013999,"profit_margin":0.39341998,"free_cash_flow_yield":0.0133239967322938,"debt_to_market_cap":0.0451553367201991,"reason":"nonpositive_momentum;below_200d_sma;above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"NOC","sector":"Industrials","final_rank":64.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.4578177164350375,"price_composite_score":0.472,"quality_score":0.436544291087594,"quality_pass":false,"momentum_12_1":0.1400634018466322,"annualized_volatility":0.3103018567094772,"latest_price":513.219970703125,"above_sma":false,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.28511998,"profit_margin":0.108009994,"free_cash_flow_yield":0.0284195293194927,"debt_to_market_cap":0.2410884383480606,"reason":"quality_score_below_threshold;below_200d_sma;above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"SO","sector":"Utilities","final_rank":65.0,"status":"价格通过但质量不足","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.4541907985889752,"price_composite_score":0.592,"quality_score":0.2474769964724382,"quality_pass":false,"momentum_12_1":0.0351572480615431,"annualized_volatility":0.1852184731115164,"latest_price":94.93000030517578,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.109910004,"profit_margin":0.14458999,"free_cash_flow_yield":-0.0369108205825518,"debt_to_market_cap":0.7102295687994098,"reason":"quality_score_below_threshold"},{"signal_date":"2026-06-23","ticker":"SCHW","sector":"Financial Services","final_rank":66.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.4497906267645397,"price_composite_score":0.362,"quality_score":0.5814765669113494,"quality_pass":true,"momentum_12_1":-0.0304905290854391,"annualized_volatility":0.2819057097264607,"latest_price":93.16999816894533,"above_sma":false,"volatility_ok":true,"price_eligible":false,"return_on_equity":0.19083,"profit_margin":0.37986,"free_cash_flow_yield":null,"debt_to_market_cap":0.3669448324124731,"reason":"nonpositive_momentum;below_200d_sma"},{"signal_date":"2026-06-23","ticker":"APD","sector":"Basic Materials","final_rank":67.0,"status":"价格通过但质量不足","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.4491269922223639,"price_composite_score":0.53,"quality_score":0.3278174805559097,"quality_pass":false,"momentum_12_1":0.0143049818576923,"annualized_volatility":0.22300061297847,"latest_price":282.45001220703125,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.12353,"profit_margin":0.16906999,"free_cash_flow_yield":-0.0559531313810567,"debt_to_market_cap":0.2932165908665092,"reason":"quality_score_below_threshold"},{"signal_date":"2026-06-23","ticker":"EXC","sector":"Utilities","final_rank":68.0,"status":"价格通过但质量不足","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.4428346147307578,"price_composite_score":0.6160000000000001,"quality_score":0.1830865368268944,"quality_pass":false,"momentum_12_1":0.0789083902426237,"annualized_volatility":0.2069897726431624,"latest_price":46.619998931884766,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.09764,"profit_margin":0.11212,"free_cash_flow_yield":-0.0588602591175827,"debt_to_market_cap":1.0741906203398648,"reason":"quality_score_below_threshold"},{"signal_date":"2026-06-23","ticker":"ADP","sector":"Technology","final_rank":69.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.4415694759658294,"price_composite_score":0.248,"quality_score":0.7319236899145735,"quality_pass":true,"momentum_12_1":-0.2662514073355362,"annualized_volatility":0.2928680037665159,"latest_price":220.5,"above_sma":false,"volatility_ok":true,"price_eligible":false,"return_on_equity":0.71208,"profit_margin":0.20118,"free_cash_flow_yield":0.0538837246684286,"debt_to_market_cap":0.0498970951021748,"reason":"nonpositive_momentum;below_200d_sma"},{"signal_date":"2026-06-23","ticker":"MLM","sector":"Basic Materials","final_rank":70.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.43800831314548,"price_composite_score":0.404,"quality_score":0.4890207828637001,"quality_pass":true,"momentum_12_1":0.0636790699707219,"annualized_volatility":0.304654160598631,"latest_price":604.1799926757812,"above_sma":false,"volatility_ok":true,"price_eligible":false,"return_on_equity":0.0947,"profit_margin":0.39905998,"free_cash_flow_yield":0.0232024289541578,"debt_to_market_cap":0.1567869478855462,"reason":"below_200d_sma"},{"signal_date":"2026-06-23","ticker":"AXP","sector":"Financial Services","final_rank":71.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.4348645962732919,"price_composite_score":0.402,"quality_score":0.4841614906832298,"quality_pass":true,"momentum_12_1":0.0025306673142617,"annualized_volatility":0.2811463025615465,"latest_price":337.7799987792969,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":0.34419,"profit_margin":0.16305,"free_cash_flow_yield":null,"debt_to_market_cap":0.2623220562113741,"reason":"outside_top_candidates"},{"signal_date":"2026-06-23","ticker":"ISRG","sector":"Healthcare","final_rank":72.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.4327769718827223,"price_composite_score":0.252,"quality_score":0.7039424297068057,"quality_pass":true,"momentum_12_1":-0.2185641860947303,"annualized_volatility":0.2930861239072223,"latest_price":403.1799926757813,"above_sma":false,"volatility_ok":true,"price_eligible":false,"return_on_equity":0.17232999,"profit_margin":0.28152,"free_cash_flow_yield":0.0157858791826185,"debt_to_market_cap":0.0,"reason":"nonpositive_momentum;below_200d_sma"},{"signal_date":"2026-06-23","ticker":"UPS","sector":"Industrials","final_rank":73.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.4294615984529729,"price_composite_score":0.4579999999999999,"quality_score":0.3866539961324323,"quality_pass":false,"momentum_12_1":0.1296528468009921,"annualized_volatility":0.310980583819125,"latest_price":105.83000183105467,"above_sma":true,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.33353,"profit_margin":0.05943,"free_cash_flow_yield":0.0514194911800653,"debt_to_market_cap":0.318621853957075,"reason":"quality_score_below_threshold;above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"VMC","sector":"Basic Materials","final_rank":74.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.4269526584215224,"price_composite_score":0.414,"quality_score":0.4463816460538059,"quality_pass":false,"momentum_12_1":0.092619699705051,"annualized_volatility":0.3109449888263753,"latest_price":299.0899963378906,"above_sma":true,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.13458,"profit_margin":0.13809,"free_cash_flow_yield":0.0062972856955478,"debt_to_market_cap":0.1337674770631357,"reason":"quality_score_below_threshold;above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"UNH","sector":"Healthcare","final_rank":75.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.4146420884865485,"price_composite_score":0.438,"quality_score":0.3796052212163713,"quality_pass":false,"momentum_12_1":0.2445997099435486,"annualized_volatility":0.416107395467853,"latest_price":409.25,"above_sma":true,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.121759996,"profit_margin":0.02678,"free_cash_flow_yield":0.0475907856169555,"debt_to_market_cap":0.2096469967435498,"reason":"quality_score_below_threshold;above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"SBUX","sector":"Consumer Cyclical","final_rank":76.0,"status":"价格通过但质量不足","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.4099354838709677,"price_composite_score":0.48,"quality_score":0.3048387096774194,"quality_pass":false,"momentum_12_1":0.1107365099794168,"annualized_volatility":0.2950179421311865,"latest_price":101.0500030517578,"above_sma":true,"volatility_ok":true,"price_eligible":true,"return_on_equity":null,"profit_margin":0.03888,"free_cash_flow_yield":-0.0113234792953097,"debt_to_market_cap":0.2119406373384572,"reason":"quality_score_below_threshold"},{"signal_date":"2026-06-23","ticker":"NFLX","sector":"Communication Services","final_rank":77.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.3984785413744741,"price_composite_score":0.114,"quality_score":0.8251963534361851,"quality_pass":true,"momentum_12_1":-0.3576426467179923,"annualized_volatility":0.3641158113178137,"latest_price":72.81999969482422,"above_sma":false,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.48494998,"profit_margin":0.28521,"free_cash_flow_yield":0.0847720255351363,"debt_to_market_cap":0.0546005955202692,"reason":"nonpositive_momentum;below_200d_sma;above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"HD","sector":"Consumer Cyclical","final_rank":78.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.3974921671129244,"price_composite_score":0.358,"quality_score":0.4567304177823112,"quality_pass":false,"momentum_12_1":-0.1186227388953241,"annualized_volatility":0.2611550026620264,"latest_price":324.45001220703125,"above_sma":false,"volatility_ok":true,"price_eligible":false,"return_on_equity":1.2838,"profit_margin":0.08411,"free_cash_flow_yield":0.0313069394391504,"debt_to_market_cap":0.1969957854243138,"reason":"quality_score_below_threshold;nonpositive_momentum;below_200d_sma"},{"signal_date":"2026-06-23","ticker":"WFC","sector":"Financial Services","final_rank":79.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.3915913043478261,"price_composite_score":0.382,"quality_score":0.4059782608695652,"quality_pass":false,"momentum_12_1":-0.0109660266971324,"annualized_volatility":0.2836156961893684,"latest_price":84.12999725341797,"above_sma":true,"volatility_ok":true,"price_eligible":false,"return_on_equity":0.12028,"profit_margin":0.26742,"free_cash_flow_yield":null,"debt_to_market_cap":1.822556568208603,"reason":"quality_score_below_threshold;nonpositive_momentum"},{"signal_date":"2026-06-23","ticker":"META","sector":"Communication Services","final_rank":80.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.3909005737600408,"price_composite_score":0.134,"quality_score":0.776251434400102,"quality_pass":true,"momentum_12_1":-0.1410324238969654,"annualized_volatility":0.394249345749625,"latest_price":562.2000122070312,"above_sma":false,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.32930002,"profit_margin":0.32837,"free_cash_flow_yield":0.0179092012836977,"debt_to_market_cap":0.0608008578956441,"reason":"nonpositive_momentum;below_200d_sma;above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"T","sector":"Communication Services","final_rank":81.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.3898113179480641,"price_composite_score":0.38,"quality_score":0.4045282948701602,"quality_pass":false,"momentum_12_1":-0.1056539999642326,"annualized_volatility":0.2601657089698735,"latest_price":22.809999465942383,"above_sma":false,"volatility_ok":true,"price_eligible":false,"return_on_equity":0.18370001,"profit_margin":0.16938,"free_cash_flow_yield":0.0558326122957835,"debt_to_market_cap":1.0079460922349166,"reason":"quality_score_below_threshold;nonpositive_momentum;below_200d_sma"},{"signal_date":"2026-06-23","ticker":"MDLZ","sector":"Consumer Defensive","final_rank":82.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.384508967656934,"price_composite_score":0.44,"quality_score":0.301272419142335,"quality_pass":false,"momentum_12_1":-0.0692653537411412,"annualized_volatility":0.2383717691781462,"latest_price":61.060001373291016,"above_sma":true,"volatility_ok":true,"price_eligible":false,"return_on_equity":0.101610005,"profit_margin":0.06638,"free_cash_flow_yield":0.0363295810104883,"debt_to_market_cap":0.2758623978334061,"reason":"quality_score_below_threshold;nonpositive_momentum"},{"signal_date":"2026-06-23","ticker":"AMT","sector":"Real Estate","final_rank":83.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.3825271558502274,"price_composite_score":0.308,"quality_score":0.4943178896255684,"quality_pass":true,"momentum_12_1":-0.1297342126465183,"annualized_volatility":0.277552234107331,"latest_price":179.3800048828125,"above_sma":true,"volatility_ok":true,"price_eligible":false,"return_on_equity":0.29952,"profit_margin":0.26806998,"free_cash_flow_yield":0.0552142837608198,"debt_to_market_cap":0.5400283856098544,"reason":"nonpositive_momentum"},{"signal_date":"2026-06-23","ticker":"SHW","sector":"Basic Materials","final_rank":84.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.3785912618470823,"price_composite_score":0.322,"quality_score":0.4634781546177058,"quality_pass":false,"momentum_12_1":-0.1068336419931397,"annualized_volatility":0.2799529970553,"latest_price":322.8999938964844,"above_sma":false,"volatility_ok":true,"price_eligible":false,"return_on_equity":0.60723,"profit_margin":0.1086,"free_cash_flow_yield":0.0268716905232045,"debt_to_market_cap":0.1833456702320235,"reason":"quality_score_below_threshold;nonpositive_momentum;below_200d_sma"},{"signal_date":"2026-06-23","ticker":"ADBE","sector":"Technology","final_rank":85.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.3741490394831909,"price_composite_score":0.07,"quality_score":0.8303725987079774,"quality_pass":true,"momentum_12_1":-0.3299989966305086,"annualized_volatility":0.4125732495314903,"latest_price":197.42999267578125,"above_sma":false,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.62953997,"profit_margin":0.28689,"free_cash_flow_yield":0.1174638064586572,"debt_to_market_cap":0.0901776519052523,"reason":"nonpositive_momentum;below_200d_sma;above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"BKNG","sector":"Consumer Cyclical","final_rank":86.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.3602308243727598,"price_composite_score":0.106,"quality_score":0.7415770609318996,"quality_pass":true,"momentum_12_1":-0.2726917823275134,"annualized_volatility":0.3864097114725368,"latest_price":168.94000244140625,"above_sma":false,"volatility_ok":false,"price_eligible":false,"return_on_equity":null,"profit_margin":0.22227,"free_cash_flow_yield":0.0540465577641319,"debt_to_market_cap":0.1464845819239915,"reason":"nonpositive_momentum;below_200d_sma;above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"LOW","sector":"Consumer Cyclical","final_rank":87.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.3562781362007168,"price_composite_score":0.344,"quality_score":0.3746953405017921,"quality_pass":false,"momentum_12_1":-0.0148448273153742,"annualized_volatility":0.2979337988766165,"latest_price":213.5399932861328,"above_sma":false,"volatility_ok":true,"price_eligible":false,"return_on_equity":null,"profit_margin":0.075100005,"free_cash_flow_yield":0.0402027414453435,"debt_to_market_cap":0.3552374198098721,"reason":"quality_score_below_threshold;nonpositive_momentum;below_200d_sma"},{"signal_date":"2026-06-23","ticker":"PPG","sector":"Basic Materials","final_rank":88.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.3491063666114157,"price_composite_score":0.318,"quality_score":0.3957659165285392,"quality_pass":false,"momentum_12_1":0.019693137300335,"annualized_volatility":0.3389552720401524,"latest_price":117.6999969482422,"above_sma":true,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.20748,"profit_margin":0.09832,"free_cash_flow_yield":0.0277869590871163,"debt_to_market_cap":0.2949076826867675,"reason":"quality_score_below_threshold;above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"BA","sector":"Industrials","final_rank":89.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.3408902673296783,"price_composite_score":0.394,"quality_score":0.2612256683241957,"quality_pass":false,"momentum_12_1":0.1031832923359121,"annualized_volatility":0.3385792576403217,"latest_price":216.7100067138672,"above_sma":false,"volatility_ok":false,"price_eligible":false,"return_on_equity":1.69947,"profit_margin":0.024600001,"free_cash_flow_yield":0.0149517361790782,"debt_to_market_cap":0.2904239778210401,"reason":"quality_score_below_threshold;below_200d_sma;above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"DIS","sector":"Communication Services","final_rank":90.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.3404711292447617,"price_composite_score":0.308,"quality_score":0.3891778231119044,"quality_pass":false,"momentum_12_1":-0.1733007932360996,"annualized_volatility":0.2743927590212918,"latest_price":103.52999877929688,"above_sma":false,"volatility_ok":true,"price_eligible":false,"return_on_equity":0.1101,"profit_margin":0.1154,"free_cash_flow_yield":0.0208663572113566,"debt_to_market_cap":0.2634204635520962,"reason":"quality_score_below_threshold;nonpositive_momentum;below_200d_sma"},{"signal_date":"2026-06-23","ticker":"ABT","sector":"Healthcare","final_rank":91.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.3348675804326576,"price_composite_score":0.252,"quality_score":0.4591689510816439,"quality_pass":false,"momentum_12_1":-0.3577776599900081,"annualized_volatility":0.2742708654169697,"latest_price":90.52999877929688,"above_sma":false,"volatility_ok":true,"price_eligible":false,"return_on_equity":0.123339996,"profit_margin":0.13904999,"free_cash_flow_yield":0.0402135364661314,"debt_to_market_cap":0.2164803998374965,"reason":"quality_score_below_threshold;nonpositive_momentum;below_200d_sma"},{"signal_date":"2026-06-23","ticker":"TMUS","sector":"Communication Services","final_rank":92.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.3346270432232564,"price_composite_score":0.298,"quality_score":0.389567608058141,"quality_pass":false,"momentum_12_1":-0.1980870702372618,"annualized_volatility":0.2755153293475011,"latest_price":184.57000732421875,"above_sma":false,"volatility_ok":true,"price_eligible":false,"return_on_equity":0.18024999,"profit_margin":0.116459996,"free_cash_flow_yield":0.0558087207320358,"debt_to_market_cap":0.6114572044560243,"reason":"quality_score_below_threshold;nonpositive_momentum;below_200d_sma"},{"signal_date":"2026-06-23","ticker":"IBM","sector":"Technology","final_rank":93.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.3283251221896383,"price_composite_score":0.242,"quality_score":0.4578128054740957,"quality_pass":false,"momentum_12_1":0.0360836136870812,"annualized_volatility":0.5012270931075543,"latest_price":264.94000244140625,"above_sma":false,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.35772,"profit_margin":0.15606,"free_cash_flow_yield":0.0525303431686723,"debt_to_market_cap":0.2803144323992251,"reason":"quality_score_below_threshold;below_200d_sma;above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"DE","sector":"Industrials","final_rank":94.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.3270228739002932,"price_composite_score":0.358,"quality_score":0.2805571847507331,"quality_pass":false,"momentum_12_1":0.0768202717326278,"annualized_volatility":0.3501476237880083,"latest_price":591.9400024414062,"above_sma":true,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.18349001,"profit_margin":0.10104,"free_cash_flow_yield":0.0068720272182484,"debt_to_market_cap":0.3031697870638515,"reason":"quality_score_below_threshold;above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"ORCL","sector":"Technology","final_rank":95.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.3189683815716775,"price_composite_score":0.2319999999999999,"quality_score":0.4494209539291937,"quality_pass":false,"momentum_12_1":0.0430645774806546,"annualized_volatility":0.603033432813743,"latest_price":165.16000366210938,"above_sma":false,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.53376,"profit_margin":0.25368,"free_cash_flow_yield":-0.0427501043504135,"debt_to_market_cap":0.3283084419140138,"reason":"quality_score_below_threshold;below_200d_sma;above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"EL","sector":"Consumer Defensive","final_rank":96.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.3081274958561774,"price_composite_score":0.314,"quality_score":0.2993187396404436,"quality_pass":false,"momentum_12_1":0.1170086748177352,"annualized_volatility":0.5359373196679321,"latest_price":83.76000213623047,"above_sma":false,"volatility_ok":false,"price_eligible":false,"return_on_equity":-0.05949,"profit_margin":-0.01672,"free_cash_flow_yield":0.0596498277639824,"debt_to_market_cap":0.3068907517932706,"reason":"quality_score_below_threshold;below_200d_sma;above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"ACN","sector":"Technology","final_rank":97.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.2958211462450593,"price_composite_score":0.03,"quality_score":0.6945528656126483,"quality_pass":true,"momentum_12_1":-0.365653076472524,"annualized_volatility":0.4957278297286959,"latest_price":127.01000213623048,"above_sma":false,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.24406,"profit_margin":0.10656,"free_cash_flow_yield":0.1555449183263871,"debt_to_market_cap":0.1079319550632285,"reason":"nonpositive_momentum;below_200d_sma;above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"CMCSA","sector":"Communication Services","final_rank":98.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.252893246631816,"price_composite_score":0.178,"quality_score":0.3652331165795401,"quality_pass":false,"momentum_12_1":-0.2238880159633667,"annualized_volatility":0.3242664481174594,"latest_price":22.799999237060547,"above_sma":false,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.20918,"profit_margin":0.15004,"free_cash_flow_yield":0.0492729591439029,"debt_to_market_cap":1.1616415903181547,"reason":"quality_score_below_threshold;nonpositive_momentum;below_200d_sma;above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"CRM","sector":"Technology","final_rank":99.0,"status":"质量可以但价格不稳","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.2328196778443622,"price_composite_score":0.068,"quality_score":0.4800491946109056,"quality_pass":true,"momentum_12_1":-0.2950922254727237,"annualized_volatility":0.4492009467061589,"latest_price":153.4199981689453,"above_sma":false,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.16908,"profit_margin":0.18733,"free_cash_flow_yield":0.1317379328181682,"debt_to_market_cap":0.3386205170419006,"reason":"nonpositive_momentum;below_200d_sma;above_defensive_volatility_limit"},{"signal_date":"2026-06-23","ticker":"NKE","sector":"Consumer Cyclical","final_rank":100.0,"status":"暂不考虑","defensive_entry_signal":false,"target_weight":0.0,"cash_weight":0.0,"final_score":0.2016797122699647,"price_composite_score":0.068,"quality_score":0.4021992806749118,"quality_pass":false,"momentum_12_1":-0.337312037904965,"annualized_volatility":0.4071133272747646,"latest_price":42.380001068115234,"above_sma":false,"volatility_ok":false,"price_eligible":false,"return_on_equity":0.16016,"profit_margin":0.04836,"free_cash_flow_yield":0.0209349120991519,"debt_to_market_cap":0.1781070995774514,"reason":"quality_score_below_threshold;nonpositive_momentum;below_200d_sma;above_defensive_volatility_limit"}],"equity_points":[{"date":"2016-01-05","value":1.0},{"date":"2016-01-22","value":1.0},{"date":"2016-02-09","value":1.0},{"date":"2016-02-26","value":1.0},{"date":"2016-03-15","value":1.0},{"date":"2016-04-01","value":1.0},{"date":"2016-04-19","value":1.0},{"date":"2016-05-05","value":1.0},{"date":"2016-05-23","value":1.0},{"date":"2016-06-09","value":1.0},{"date":"2016-06-27","value":1.0},{"date":"2016-07-14","value":1.0},{"date":"2016-08-01","value":1.0},{"date":"2016-08-17","value":1.0},{"date":"2016-09-02","value":1.0},{"date":"2016-09-21","value":1.0},{"date":"2016-10-07","value":1.0},{"date":"2016-10-25","value":1.0},{"date":"2016-11-10","value":1.0},{"date":"2016-11-29","value":1.0},{"date":"2016-12-15","value":1.0},{"date":"2017-01-04","value":1.0},{"date":"2017-01-23","value":1.0},{"date":"2017-02-01","value":0.9896553296428238},{"date":"2017-02-08","value":1.0002980340581966},{"date":"2017-02-27","value":1.041189294955263},{"date":"2017-03-15","value":1.0417344652857385},{"date":"2017-03-31","value":1.034845381537267},{"date":"2017-04-19","value":1.0134422820716051},{"date":"2017-05-05","value":1.0435259071027898},{"date":"2017-05-23","value":1.0416327920153086},{"date":"2017-06-09","value":1.0516008927470004},{"date":"2017-06-27","value":1.0538709572824898},{"date":"2017-07-14","value":1.084985173395844},{"date":"2017-08-01","value":1.1072987749718695},{"date":"2017-08-17","value":1.1173051347070966},{"date":"2017-09-05","value":1.1375875751665807},{"date":"2017-09-21","value":1.1477651934631221},{"date":"2017-10-09","value":1.1680907458458196},{"date":"2017-10-25","value":1.2034239241754865},{"date":"2017-11-10","value":1.207268222598996},{"date":"2017-11-29","value":1.2645510073093602},{"date":"2017-12-15","value":1.2752384299676964},{"date":"2018-01-04","value":1.2914637451466349},{"date":"2018-01-23","value":1.3312382890331915},{"date":"2018-02-08","value":1.2246038487189985},{"date":"2018-02-27","value":1.313557050107236},{"date":"2018-03-15","value":1.3027981020995982},{"date":"2018-04-03","value":1.2698824380794806},{"date":"2018-04-19","value":1.336074086407935},{"date":"2018-05-07","value":1.300206129747319},{"date":"2018-05-23","value":1.355910050082129},{"date":"2018-06-11","value":1.367005213870833},{"date":"2018-06-27","value":1.3194177860651353},{"date":"2018-07-16","value":1.3345572679942654},{"date":"2018-08-01","value":1.3675407899671717},{"date":"2018-08-17","value":1.367636337887683},{"date":"2018-09-05","value":1.4230333241205082},{"date":"2018-09-21","value":1.4531868487093134},{"date":"2018-10-09","value":1.440412074897381},{"date":"2018-10-25","value":1.3981277991511625},{"date":"2018-11-12","value":1.4389154300138292},{"date":"2018-11-29","value":1.4432541665725764},{"date":"2018-12-18","value":1.3409311262641583},{"date":"2019-01-07","value":1.35765028869799},{"date":"2019-01-24","value":1.370553539905198},{"date":"2019-02-11","value":1.404009239182055},{"date":"2019-02-28","value":1.4511073558236773},{"date":"2019-03-18","value":1.485971733996276},{"date":"2019-04-03","value":1.507725842294732},{"date":"2019-04-22","value":1.4726666037973082},{"date":"2019-05-08","value":1.4782225659296988},{"date":"2019-05-24","value":1.5270779721686618},{"date":"2019-06-12","value":1.5726358590055756},{"date":"2019-06-28","value":1.5729570428687791},{"date":"2019-07-17","value":1.6148187325533447},{"date":"2019-08-02","value":1.634000960323215},{"date":"2019-08-20","value":1.6814337246490567},{"date":"2019-09-06","value":1.714887836967592},{"date":"2019-09-24","value":1.6951596155160251},{"date":"2019-10-10","value":1.7002659229565669},{"date":"2019-10-28","value":1.6502733806835055},{"date":"2019-11-13","value":1.647440620257553},{"date":"2019-12-02","value":1.6687906207190775},{"date":"2019-12-18","value":1.706536825765151},{"date":"2020-01-07","value":1.710851548906221},{"date":"2020-01-24","value":1.8076120588701692},{"date":"2020-02-11","value":1.8299901149975732},{"date":"2020-02-28","value":1.6112509592260205},{"date":"2020-03-17","value":1.4798098405260651},{"date":"2020-04-02","value":1.4861992537317137},{"date":"2020-04-21","value":1.6620687295124692},{"date":"2020-05-07","value":1.7098580992243488},{"date":"2020-05-26","value":1.7005112107510056},{"date":"2020-06-11","value":1.7076036665588008},{"date":"2020-06-29","value":1.7910310016387632},{"date":"2020-07-16","value":1.9138944275746868},{"date":"2020-08-03","value":1.9499912566913393},{"date":"2020-08-19","value":1.9665068489672068},{"date":"2020-09-04","value":1.9489811087815994},{"date":"2020-09-23","value":1.850616833786286},{"date":"2020-10-09","value":1.9687235540929235},{"date":"2020-10-27","value":1.9139679826508358},{"date":"2020-11-12","value":1.8871626209395764},{"date":"2020-12-01","value":1.911371227085865},{"date":"2020-12-17","value":1.8879439595503344},{"date":"2021-01-06","value":1.9110911605716363},{"date":"2021-01-25","value":1.9179749870981124},{"date":"2021-02-10","value":1.9093302630522142},{"date":"2021-03-01","value":1.9107905659764473},{"date":"2021-03-17","value":1.9265034157823981},{"date":"2021-04-06","value":1.975375565892446},{"date":"2021-04-22","value":2.0374645291944318},{"date":"2021-05-10","value":2.1626216484237224},{"date":"2021-05-26","value":2.1249265596574536},{"date":"2021-06-14","value":2.101077713980959},{"date":"2021-06-30","value":2.0902211279414438},{"date":"2021-07-19","value":2.060071024070115},{"date":"2021-08-04","value":2.143032833417072},{"date":"2021-08-20","value":2.1844773322384565},{"date":"2021-09-08","value":2.213739646277256},{"date":"2021-09-24","value":2.179010089634082},{"date":"2021-10-12","value":2.126892838647266},{"date":"2021-10-28","value":2.2873955288468744},{"date":"2021-11-15","value":2.329952066280475},{"date":"2021-12-02","value":2.2311040298700684},{"date":"2021-12-20","value":2.2646257686779805},{"date":"2022-01-06","value":2.2464818692826225},{"date":"2022-01-25","value":2.0820875060327606},{"date":"2022-02-10","value":2.1513843643697683},{"date":"2022-03-01","value":2.080563085313911},{"date":"2022-03-17","value":2.168780519133088},{"date":"2022-04-04","value":2.1931628523443374},{"date":"2022-04-21","value":2.2571340123639576},{"date":"2022-05-09","value":2.110535464279023},{"date":"2022-05-25","value":2.1511846876752494},{"date":"2022-06-13","value":1.9915615485253237},{"date":"2022-06-30","value":2.042854894919791},{"date":"2022-07-19","value":2.0221913028967426},{"date":"2022-08-04","value":2.043126715287754},{"date":"2022-08-22","value":2.100756132203878},{"date":"2022-09-08","value":2.0570296835442887},{"date":"2022-09-26","value":1.9362526943929845},{"date":"2022-10-12","value":1.8966971711362113},{"date":"2022-10-28","value":2.117350146596177},{"date":"2022-11-15","value":2.1104535820694874},{"date":"2022-12-02","value":2.229358425253371},{"date":"2022-12-20","value":2.161449195333479},{"date":"2023-01-09","value":2.1695093372076433},{"date":"2023-01-26","value":2.0936056521046464},{"date":"2023-02-13","value":2.129574263411667},{"date":"2023-03-02","value":2.065704387678641},{"date":"2023-03-20","value":2.062918663655859},{"date":"2023-04-05","value":2.160916603387295},{"date":"2023-04-24","value":2.209904724196567},{"date":"2023-05-10","value":2.2333223169586245},{"date":"2023-05-26","value":2.1980560283297255},{"date":"2023-06-14","value":2.2622077430275693},{"date":"2023-07-03","value":2.299463933966889},{"date":"2023-07-20","value":2.3159746408568287},{"date":"2023-08-07","value":2.3168141344924913},{"date":"2023-08-23","value":2.3645796998197315},{"date":"2023-09-11","value":2.3937353500277085},{"date":"2023-09-27","value":2.3089759454336445},{"date":"2023-10-13","value":2.314232103280359},{"date":"2023-10-31","value":2.3064448176616024},{"date":"2023-11-16","value":2.3099959562463113},{"date":"2023-12-05","value":2.3092527228191466},{"date":"2023-12-21","value":2.3553398466072255},{"date":"2024-01-10","value":2.3737476871853977},{"date":"2024-01-29","value":2.4632745316945304},{"date":"2024-02-14","value":2.5654073468503866},{"date":"2024-03-04","value":2.6801659975277596},{"date":"2024-03-20","value":2.7506147609196883},{"date":"2024-04-08","value":2.6671066837874173},{"date":"2024-04-24","value":2.5888065222559598},{"date":"2024-05-10","value":2.655726542800969},{"date":"2024-05-29","value":2.5825231203955443},{"date":"2024-06-14","value":2.6374464288750725},{"date":"2024-07-03","value":2.658720825012313},{"date":"2024-07-22","value":2.7287141620048296},{"date":"2024-08-07","value":2.682178345921454},{"date":"2024-08-23","value":2.870751238135268},{"date":"2024-09-11","value":2.9191700015679665},{"date":"2024-09-27","value":2.9401584174155286},{"date":"2024-10-15","value":2.980575747847413},{"date":"2024-10-31","value":2.923107303832286},{"date":"2024-11-18","value":3.016553487092254},{"date":"2024-12-05","value":3.0875842605782085},{"date":"2024-12-23","value":2.963847691987897},{"date":"2025-01-13","value":2.951172258411403},{"date":"2025-01-30","value":3.088643511852531},{"date":"2025-02-18","value":3.0788152790118715},{"date":"2025-03-06","value":3.0516684050798024},{"date":"2025-03-24","value":2.9925411373259303},{"date":"2025-04-09","value":2.9608320464066145},{"date":"2025-04-28","value":3.005139577192884},{"date":"2025-05-14","value":2.9478662350270857},{"date":"2025-06-02","value":3.091501708292607},{"date":"2025-06-18","value":3.0119830782133916},{"date":"2025-07-08","value":3.0393364744461797},{"date":"2025-07-24","value":3.015617276912169},{"date":"2025-08-11","value":3.106398283113624},{"date":"2025-08-27","value":3.0628932340326975},{"date":"2025-09-15","value":3.0476824434729592},{"date":"2025-10-01","value":3.0431707061074316},{"date":"2025-10-17","value":3.0084781487836634},{"date":"2025-11-04","value":2.8542313133321775},{"date":"2025-11-20","value":2.803908142789374},{"date":"2025-12-09","value":2.836167832672081},{"date":"2025-12-26","value":2.94619198590567},{"date":"2026-01-14","value":2.9904926269597176},{"date":"2026-02-02","value":3.0355398842062744},{"date":"2026-02-19","value":3.0666251393428032},{"date":"2026-03-09","value":3.052426283910598},{"date":"2026-03-25","value":3.042737766536945},{"date":"2026-04-13","value":3.1384755583575368},{"date":"2026-04-29","value":3.1858843196844093},{"date":"2026-04-30","value":3.3093329361910966},{"date":"2026-06-23","value":3.155359314959435}],"drawdown_points":[{"date":"2016-01-05","value":0.0},{"date":"2016-01-22","value":0.0},{"date":"2016-02-09","value":0.0},{"date":"2016-02-26","value":0.0},{"date":"2016-03-15","value":0.0},{"date":"2016-04-01","value":0.0},{"date":"2016-04-19","value":0.0},{"date":"2016-05-05","value":0.0},{"date":"2016-05-23","value":0.0},{"date":"2016-06-09","value":0.0},{"date":"2016-06-27","value":0.0},{"date":"2016-07-14","value":0.0},{"date":"2016-08-01","value":0.0},{"date":"2016-08-17","value":0.0},{"date":"2016-09-02","value":0.0},{"date":"2016-09-21","value":0.0},{"date":"2016-10-07","value":0.0},{"date":"2016-10-25","value":0.0},{"date":"2016-11-10","value":0.0},{"date":"2016-11-29","value":0.0},{"date":"2016-12-15","value":0.0},{"date":"2017-01-04","value":0.0},{"date":"2017-01-23","value":0.0},{"date":"2017-02-08","value":-0.00480677931676432},{"date":"2017-02-27","value":-0.002121276387916149},{"date":"2017-03-15","value":-0.01439762222382146},{"date":"2017-03-31","value":-0.020915499427135886},{"date":"2017-04-19","value":-0.04116532932918315},{"date":"2017-05-05","value":-0.012702709198121553},{"date":"2017-05-23","value":-0.014493817003231602},{"date":"2017-06-09","value":-0.01838362295206175},{"date":"2017-06-27","value":-0.01626463223955754},{"date":"2017-07-14","value":0.0},{"date":"2017-08-01","value":-0.000541625481862984},{"date":"2017-08-17","value":-0.012236363721340404},{"date":"2017-09-05","value":-0.006640782680871982},{"date":"2017-09-21","value":-0.011433208175516185},{"date":"2017-10-09","value":0.0},{"date":"2017-10-25","value":0.0},{"date":"2017-11-10","value":-0.012143057378508737},{"date":"2017-11-29","value":0.0},{"date":"2017-12-15","value":-0.0042087586354723205},{"date":"2018-01-04","value":0.0},{"date":"2018-01-23","value":0.0},{"date":"2018-02-08","value":-0.09880518476540223},{"date":"2018-02-27","value":-0.03334388152562007},{"date":"2018-03-15","value":-0.0412614690556643},{"date":"2018-04-03","value":-0.06548434389471003},{"date":"2018-04-19","value":-0.016773431914616554},{"date":"2018-05-07","value":-0.04316892022654606},{"date":"2018-05-23","value":-0.002176003009697669},{"date":"2018-06-11","value":0.0},{"date":"2018-06-27","value":-0.03481144572298189},{"date":"2018-07-16","value":-0.023736519471412643},{"date":"2018-08-01","value":-0.011537389927442687},{"date":"2018-08-17","value":-0.011468327602144224},{"date":"2018-09-05","value":-0.009657288492450733},{"date":"2018-09-21","value":0.0},{"date":"2018-10-09","value":-0.021532789754374226},{"date":"2018-10-25","value":-0.050256359938001594},{"date":"2018-11-12","value":-0.022549455727576162},{"date":"2018-11-29","value":-0.019602166177167035},{"date":"2018-12-18","value":-0.08910987271424353},{"date":"2019-01-07","value":-0.07775260036880016},{"date":"2019-01-24","value":-0.06898746403604983},{"date":"2019-02-11","value":-0.046261116965837346},{"date":"2019-02-28","value":-0.01426752041018886},{"date":"2019-03-18","value":-0.001525581726119496},{"date":"2019-04-03","value":-0.007813875145889382},{"date":"2019-04-22","value":-0.03088523799535292},{"date":"2019-05-08","value":-0.027229037124256394},{"date":"2019-05-24","value":-0.0001542291866321044},{"date":"2019-06-12","value":0.0},{"date":"2019-06-28","value":-0.0216417352018885},{"date":"2019-07-17","value":-0.004324967172447569},{"date":"2019-08-02","value":-0.006771820726741207},{"date":"2019-08-20","value":-0.00563085094817195},{"date":"2019-09-06","value":-0.007146990844198453},{"date":"2019-09-24","value":-0.018568859733370857},{"date":"2019-10-10","value":-0.01561250737100206},{"date":"2019-10-28","value":-0.04455623474557302},{"date":"2019-11-13","value":-0.04619629227732269},{"date":"2019-12-02","value":-0.03383547674947718},{"date":"2019-12-18","value":-0.011981899823726105},{"date":"2020-01-07","value":-0.009483843821497584},{"date":"2020-01-24","value":-0.002939005272415973},{"date":"2020-02-11","value":-0.011930776299951207},{"date":"2020-02-28","value":-0.13050638483481602},{"date":"2020-03-17","value":-0.20143711901087458},{"date":"2020-03-23","value":-0.33193302322184604},{"date":"2020-04-02","value":-0.19798914341455154},{"date":"2020-04-21","value":-0.10308314170314203},{"date":"2020-05-07","value":-0.07729414117574562},{"date":"2020-05-26","value":-0.08233808532528819},{"date":"2020-06-11","value":-0.07851072062743791},{"date":"2020-06-29","value":-0.03349008944213905},{"date":"2020-07-16","value":-0.005159181025663706},{"date":"2020-08-03","value":-0.00401760386254002},{"date":"2020-08-19","value":-0.0039120398491804265},{"date":"2020-09-04","value":-0.058896415413429715},{"date":"2020-09-23","value":-0.10639352627625331},{"date":"2020-10-09","value":-0.04936339019975455},{"date":"2020-10-27","value":-0.07580318703926792},{"date":"2020-11-12","value":-0.08874667934862956},{"date":"2020-12-01","value":-0.07705708116860455},{"date":"2020-12-17","value":-0.08836939474384442},{"date":"2021-01-06","value":-0.07719231675363691},{"date":"2021-01-25","value":-0.0738683267002963},{"date":"2021-02-10","value":-0.07804260050454193},{"date":"2021-03-01","value":-0.07733746472339664},{"date":"2021-03-17","value":-0.0697502083822128},{"date":"2021-04-06","value":-0.046151336413786326},{"date":"2021-04-22","value":-0.01617046812138323},{"date":"2021-05-10","value":-0.0003633527054500707},{"date":"2021-05-26","value":-0.01778729377311139},{"date":"2021-06-14","value":-0.03090382953689863},{"date":"2021-06-30","value":-0.03591129588866093},{"date":"2021-07-19","value":-0.04981765927843229},{"date":"2021-08-04","value":-0.011552548379466954},{"date":"2021-08-20","value":-0.015095870102173392},{"date":"2021-09-08","value":-0.007731353574405131},{"date":"2021-09-24","value":-0.02329824745880349},{"date":"2021-10-12","value":-0.04665885997666497},{"date":"2021-10-28","value":0.0},{"date":"2021-11-15","value":0.0},{"date":"2021-12-02","value":-0.04242492274452969},{"date":"2021-12-20","value":-0.03169422955228696},{"date":"2022-01-06","value":-0.046517924543778566},{"date":"2022-01-25","value":-0.11629239315092432},{"date":"2022-02-10","value":-0.08688048771192547},{"date":"2022-03-01","value":-0.11693940831305472},{"date":"2022-03-17","value":-0.07949697753296969},{"date":"2022-04-04","value":-0.06914829945432088},{"date":"2022-04-21","value":-0.04199679858584182},{"date":"2022-05-09","value":-0.10421812776644568},{"date":"2022-05-25","value":-0.0869652371825147},{"date":"2022-06-13","value":-0.15471463863043744},{"date":"2022-06-30","value":-0.13294402608019718},{"date":"2022-07-19","value":-0.14171434596477672},{"date":"2022-08-04","value":-0.1328286564205794},{"date":"2022-08-22","value":-0.10836880352799194},{"date":"2022-09-08","value":-0.12692777148155432},{"date":"2022-09-26","value":-0.17818956702861266},{"date":"2022-10-12","value":-0.19497825467676566},{"date":"2022-10-28","value":-0.10132574856313159},{"date":"2022-11-15","value":-0.10425288131605503},{"date":"2022-12-02","value":-0.05378568716194865},{"date":"2022-12-20","value":-0.08260863666891682},{"date":"2023-01-09","value":-0.07918764275495127},{"date":"2023-01-26","value":-0.11140370654623932},{"date":"2023-02-13","value":-0.09613742435218453},{"date":"2023-03-02","value":-0.12324593678033235},{"date":"2023-03-20","value":-0.12442829126946009},{"date":"2023-04-05","value":-0.08283468651207926},{"date":"2023-04-24","value":-0.06204248883596786},{"date":"2023-05-10","value":-0.05210327888539501},{"date":"2023-05-26","value":-0.06707147183424744},{"date":"2023-06-14","value":-0.039843337518741695},{"date":"2023-07-03","value":-0.024030563444691677},{"date":"2023-07-20","value":-0.017022866971407313},{"date":"2023-08-07","value":-0.016666557781910285},{"date":"2023-08-23","value":-0.0016230103644980787},{"date":"2023-09-11","value":0.0},{"date":"2023-09-27","value":-0.04295852580944537},{"date":"2023-10-13","value":-0.040779914523283556},{"date":"2023-10-31","value":-0.044007646420299085},{"date":"2023-11-16","value":-0.04253574416298633},{"date":"2023-12-05","value":-0.04284380506600616},{"date":"2023-12-21","value":-0.023741272197019492},{"date":"2024-01-10","value":-0.016111453913966733},{"date":"2024-01-29","value":0.0},{"date":"2024-02-14","value":0.0},{"date":"2024-03-04","value":0.0},{"date":"2024-03-20","value":0.0},{"date":"2024-04-08","value":-0.03035978658979832},{"date":"2024-04-24","value":-0.05882620894887758},{"date":"2024-05-10","value":-0.03449709478291052},{"date":"2024-05-29","value":-0.06111057168468814},{"date":"2024-06-14","value":-0.04114292326664348},{"date":"2024-07-03","value":-0.03340850824077235},{"date":"2024-07-22","value":-0.007962074233738181},{"date":"2024-08-07","value":-0.02540983033802635},{"date":"2024-08-23","value":0.0},{"date":"2024-09-11","value":-0.004254224546476504},{"date":"2024-09-27","value":-0.009920448201909182},{"date":"2024-10-15","value":0.0},{"date":"2024-10-31","value":-0.03003008744278035},{"date":"2024-11-18","value":-0.002687004410389715},{"date":"2024-12-05","value":-0.004791337562299769},{"date":"2024-12-23","value":-0.04467484989058634},{"date":"2025-01-13","value":-0.04876047160350383},{"date":"2025-01-30","value":-0.004449913343578582},{"date":"2025-02-18","value":-0.010538712351464197},{"date":"2025-03-06","value":-0.02574917591943726},{"date":"2025-03-24","value":-0.04462566631366005},{"date":"2025-04-09","value":-0.054748852668889625},{"date":"2025-04-28","value":-0.040603590913175},{"date":"2025-05-14","value":-0.05888821210923767},{"date":"2025-06-02","value":-0.013032319652771296},{"date":"2025-06-18","value":-0.038418790461812846},{"date":"2025-07-08","value":-0.029686167750631043},{"date":"2025-07-24","value":-0.037258565756119855},{"date":"2025-08-11","value":-0.008276560386399012},{"date":"2025-08-27","value":-0.02216562836252789},{"date":"2025-09-15","value":-0.027021701588922364},{"date":"2025-10-01","value":-0.028462082148973833},{"date":"2025-10-17","value":-0.03953774571251212},{"date":"2025-11-04","value":-0.08878133531755616},{"date":"2025-11-20","value":-0.10484710127366792},{"date":"2025-12-09","value":-0.09454813517351957},{"date":"2025-12-26","value":-0.05942271926065035},{"date":"2026-01-14","value":-0.04527965706478432},{"date":"2026-02-02","value":-0.030898236258391276},{"date":"2026-02-19","value":-0.02149586973069484},{"date":"2026-03-09","value":-0.026026465435811663},{"date":"2026-03-25","value":-0.029117894559208546},{"date":"2026-04-13","value":-0.015340047309362004},{"date":"2026-04-29","value":-0.00411262769398657},{"date":"2026-05-15","value":-0.02100892356786388},{"date":"2026-06-23","value":-0.04652708693881946}]}</script>
+  <script>
+    const DATA = JSON.parse(document.getElementById("dashboard-data").textContent);
+    const pctFormatter = new Intl.NumberFormat("zh-CN", { style: "percent", maximumFractionDigits: 1 });
+    const pct2Formatter = new Intl.NumberFormat("zh-CN", { style: "percent", maximumFractionDigits: 2 });
+    const num = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 2 });
+    const score = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 3 });
+
+    function setText(id, value) {
+      document.getElementById(id).textContent = value;
+    }
+
+    function pct(value) {
+      if (!Number.isFinite(value)) return "--";
+      return pctFormatter.format(value);
+    }
+
+    function pct2(value) {
+      if (!Number.isFinite(value)) return "--";
+      return pct2Formatter.format(value);
+    }
+
+    function scoreText(value) {
+      if (!Number.isFinite(value)) return "--";
+      return score.format(value);
+    }
+
+    function badgeClass(row) {
+      if (row.defensive_entry_signal) return "badge primary";
+      if (row.price_eligible && !row.quality_pass) return "badge risk";
+      if (row.quality_pass && !row.price_eligible) return "badge watch";
+      return "badge avoid";
+    }
+
+    function renderCandidates() {
+      const container = document.getElementById("candidateList");
+      if (DATA.candidates.length === 0) {
+        container.innerHTML = `<div class="stock-row"><div class="ticker">现金</div><div class="meta">当前没有股票同时通过价格和质量过滤。</div><div class="weight">${pct(DATA.cash_weight)}</div></div>`;
+        return;
+      }
+      container.innerHTML = DATA.candidates.map((row) => `
+        <div class="stock-row">
+          <div class="ticker">${row.ticker}</div>
+          <div>
+            <span class="badge primary">${row.status}</span>
+            <div class="meta">${row.sector} · 质量分 ${scoreText(row.quality_score)} · 动量 ${pct(row.momentum_12_1)} · 波动 ${pct(row.annualized_volatility)}</div>
+          </div>
+          <div class="weight">${pct(row.target_weight)}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderRanking() {
+      document.getElementById("rankingTable").innerHTML = DATA.rows.slice(0, 30).map((row) => `
+        <tr>
+          <td class="numeric">${Number.isFinite(row.final_rank) ? Math.round(row.final_rank) : "--"}</td>
+          <td><strong>${row.ticker}</strong></td>
+          <td>${row.sector || "--"}</td>
+          <td class="numeric">${scoreText(row.quality_score)}</td>
+          <td class="numeric">${pct(row.momentum_12_1)}</td>
+          <td class="numeric">${pct(row.annualized_volatility)}</td>
+          <td><span class="${badgeClass(row)}">${row.status}</span></td>
+        </tr>
+      `).join("");
+    }
+
+    function renderCostTable() {
+      document.getElementById("costTable").innerHTML = DATA.metrics.map((row) => `
+        <tr>
+          <td class="numeric">${row.cost_bps} bps</td>
+          <td class="numeric">${pct(row.total_return)}</td>
+          <td class="numeric">${pct(row.CAGR)}</td>
+          <td class="numeric">${pct(row.annual_vol)}</td>
+          <td class="numeric">${num.format(row.Sharpe)}</td>
+          <td class="numeric">${pct(row.max_drawdown)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function scalePoints(points, width, height, pad) {
+      const values = points.map((point) => point.value);
+      let min = Math.min(...values);
+      let max = Math.max(...values);
+      if (min === max) {
+        min = min - 1;
+        max = max + 1;
+      }
+      const xStep = points.length > 1 ? (width - pad * 2) / (points.length - 1) : 0;
+      return points.map((point, index) => {
+        const x = pad + index * xStep;
+        const y = height - pad - ((point.value - min) / (max - min)) * (height - pad * 2);
+        return { x, y, value: point.value, date: point.date };
+      });
+    }
+
+    function renderLineChart(id, points, color, fillColor, formatter) {
+      const width = 760;
+      const height = 260;
+      const pad = 34;
+      const scaled = scalePoints(points, width, height, pad);
+      const line = scaled.map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(" ");
+      const area = `${pad},${height - pad} ${line} ${width - pad},${height - pad}`;
+      const first = points[0];
+      const last = points[points.length - 1];
+      const min = points.reduce((a, b) => a.value < b.value ? a : b);
+      const max = points.reduce((a, b) => a.value > b.value ? a : b);
+      document.getElementById(id).innerHTML = `
+        <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="趋势图">
+          <line x1="${pad}" y1="${height - pad}" x2="${width - pad}" y2="${height - pad}" stroke="#d7ddd4" />
+          <line x1="${pad}" y1="${pad}" x2="${pad}" y2="${height - pad}" stroke="#d7ddd4" />
+          <polygon points="${area}" fill="${fillColor}" opacity="0.72"></polygon>
+          <polyline points="${line}" fill="none" stroke="${color}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"></polyline>
+          <text x="${pad}" y="${height - 8}" fill="#5f6862" font-size="13">${first.date}</text>
+          <text x="${width - pad}" y="${height - 8}" fill="#5f6862" font-size="13" text-anchor="end">${last.date}</text>
+          <text x="${pad}" y="20" fill="#5f6862" font-size="13">${formatter(max.value)}</text>
+          <text x="${width - pad}" y="20" fill="#5f6862" font-size="13" text-anchor="end">${formatter(min.value)}</text>
+        </svg>
+      `;
+    }
+
+    function render() {
+      setText("signalDate", DATA.signal_date);
+      setText("generatedAt", `生成时间 ${DATA.generated_at}`);
+      setText("candidateCount", `${DATA.candidate_count} 只`);
+      setText("cashWeight", pct(DATA.cash_weight));
+      setText("sharpeLabel", `${DATA.base_cost_bps} bps 成本 Sharpe`);
+      setText("sharpeValue", num.format(DATA.base_metric.Sharpe));
+      setText("drawdownValue", pct(DATA.base_metric.max_drawdown));
+      setText("qualitySubtitle", `${DATA.quality_summary.available_tickers}/${DATA.quality_summary.total_tickers} 只有足够基本面字段，${DATA.quality_summary.quality_pass_tickers} 只通过质量线，质量线 ${scoreText(DATA.quality_summary.quality_threshold)}。`);
+      setText("equitySubtitle", `按 ${DATA.base_cost_bps} bps 交易成本计算，累计收益 ${pct2(DATA.base_metric.total_return)}。`);
+      renderCandidates();
+      renderRanking();
+      renderCostTable();
+      renderLineChart("equityChart", DATA.equity_points, "#0a735f", "#dcefe8", (value) => num.format(value));
+      renderLineChart("drawdownChart", DATA.drawdown_points, "#b33d4b", "#f4dce0", (value) => pct(value));
+    }
+
+    render();
+  </script>
+</body>
+</html>

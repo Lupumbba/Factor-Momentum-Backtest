@@ -158,6 +158,32 @@ ETF_DUAL_MOMENTUM_DATA_DIR: Final[Path] = DATA_DIR_STRATEGIES / ETF_DUAL_MOMENTU
 ETF_DUAL_MOMENTUM_RESULTS_DIR: Final[Path] = STRATEGY_RESULTS_DIR / ETF_DUAL_MOMENTUM_SLUG
 ETF_DUAL_MOMENTUM_SITE_DIR: Final[Path] = RESULTS_DIR / "site" / ETF_DUAL_MOMENTUM_SLUG
 
+# ========= Low-volatility quality momentum strategy =========
+LOW_VOL_QUALITY_MOMENTUM_SLUG: Final[str] = "low_vol_quality_momentum"
+LOW_VOL_QUALITY_MOMENTUM_NAME: Final[str] = "低波动质量动量防守版"
+LOW_VOL_QUALITY_UNIVERSE_SLUG: Final[str] = "sector_balanced_100"
+LOW_VOL_QUALITY_TICKERS: Final[tuple[str, ...]] = SECTOR_BALANCED_100_TICKERS
+LOW_VOL_QUALITY_TOP_N: Final[int] = 8
+LOW_VOL_QUALITY_MIN_FULL_POSITIONS: Final[int] = 5
+LOW_VOL_QUALITY_CASH_TICKER: Final[str] = "CASH"
+LOW_VOL_QUALITY_MIN_MOMENTUM: Final[float] = 0.0
+LOW_VOL_QUALITY_SMA_WINDOW: Final[int] = 200
+LOW_VOL_QUALITY_VOL_WINDOW: Final[int] = 126
+LOW_VOL_QUALITY_MAX_VOL_QUANTILE: Final[float] = 0.60
+LOW_VOL_QUALITY_MIN_FACTOR_COUNT: Final[int] = 4
+LOW_VOL_QUALITY_PASS_QUANTILE: Final[float] = 0.50
+LOW_VOL_QUALITY_MIN_COVERAGE: Final[float] = 0.65
+LOW_VOL_QUALITY_PRICE_WEIGHT: Final[float] = 0.60
+LOW_VOL_QUALITY_QUALITY_WEIGHT: Final[float] = 0.40
+LOW_VOL_QUALITY_WEIGHTS_FILE: Final[str] = "low_vol_quality_weights.parquet"
+LOW_VOL_QUALITY_RETURNS_FILE: Final[str] = "returns_with_cash.parquet"
+LOW_VOL_QUALITY_PRICE_SCORES_FILE: Final[str] = "price_defensive_scores.parquet"
+LOW_VOL_QUALITY_SELECTION_FILE: Final[str] = "low_vol_quality_latest_selection.csv"
+LOW_VOL_QUALITY_SNAPSHOT_FILE: Final[str] = "quality_snapshot.csv"
+LOW_VOL_QUALITY_DATA_DIR: Final[Path] = DATA_DIR_STRATEGIES / LOW_VOL_QUALITY_MOMENTUM_SLUG
+LOW_VOL_QUALITY_RESULTS_DIR: Final[Path] = STRATEGY_RESULTS_DIR / LOW_VOL_QUALITY_MOMENTUM_SLUG
+LOW_VOL_QUALITY_SITE_DIR: Final[Path] = RESULTS_DIR / "site" / LOW_VOL_QUALITY_MOMENTUM_SLUG
+
 # ========= Latest selection report =========
 SELECTION_TOP_N: Final[int] = 10
 SELECTION_MIN_MOMENTUM: Final[float] = 0.0
