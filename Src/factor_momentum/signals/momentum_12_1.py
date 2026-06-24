@@ -1,24 +1,23 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
+
 import pandas as pd
 
-# Create paths for all the files 
-@dataclass(frozen=True)
-class SignalPaths:
-    cleaned_prices_path: Path = Path("Data/Processed/prices.parquet")
-    out_scores_path: Path = Path("Data/Processed/mom12_1_scores.parquet")
-    out_monthly_prices_path: Path = Path("Data/Processed/prices_month_end.parquet")
+from ..config import (
+    DATA_DIR_PROCESSED,
+    MOMENTUM_SCORES_FILE,
+    MONTH_END_PRICES_FILE,
+    PRICES_FILE,
+)
 
-# loading the daily price table
-def load_prices_wide(path: Path) -> pd.DataFrame: # -> is a return type hint - it will return as a dataframe 
-    df = pd.read_parquet(path)
+
+def load_prices_wide(path: Path) -> pd.DataFrame:
+    df: pd.DataFrame = pd.read_parquet(path)
     if not isinstance(df.index, pd.DatetimeIndex):
         df.index = pd.to_datetime(df.index)
-    df = df.sort_index() # sort by date 
+    df = df.sort_index()
 
-    # optional: drop duplicate dates if any
     df = df[~df.index.duplicated(keep="last")]
     return df
 
@@ -32,7 +31,7 @@ def make_month_end_prices(daily_prices: pd.DataFrame) -> pd.DataFrame:
     month_end_prices: pd.DataFrame = sorted_prices.groupby(month_periods).tail(1)
     return month_end_prices
 
-# computing mom
+
 def momentum_12_1(month_end_prices: pd.DataFrame) -> pd.DataFrame:
     """
     12–1 momentum at month-end t:
@@ -56,30 +55,37 @@ def coverage_report(scores: pd.DataFrame) -> pd.DataFrame:
     return rep
 
 
-def main() -> None:
-    paths = SignalPaths()
+def build_and_save_momentum_scores(
+    cleaned_prices_path: Path,
+    out_scores_path: Path,
+    out_monthly_prices_path: Path,
+) -> pd.DataFrame:
+    daily: pd.DataFrame = load_prices_wide(cleaned_prices_path)
+    month_end: pd.DataFrame = make_month_end_prices(daily)
+    scores: pd.DataFrame = momentum_12_1(month_end)
 
-    daily = load_prices_wide(paths.cleaned_prices_path)
-    month_end = make_month_end_prices(daily)
-    scores = momentum_12_1(month_end)
+    out_monthly_prices_path.parent.mkdir(parents=True, exist_ok=True)
+    month_end.to_parquet(out_monthly_prices_path)
+    scores.to_parquet(out_scores_path)
 
-    # Save artifacts
-    paths.out_monthly_prices_path.parent.mkdir(parents=True, exist_ok=True)
-    month_end.to_parquet(paths.out_monthly_prices_path)
-    scores.to_parquet(paths.out_scores_path)
+    rep: pd.DataFrame = coverage_report(scores)
 
-    # Quick verification
-    rep = coverage_report(scores)
-
-    print("Saved month-end prices:", paths.out_monthly_prices_path)
-    print("Saved 12–1 momentum scores:", paths.out_scores_path)
+    print("Saved month-end prices:", out_monthly_prices_path)
+    print("Saved 12–1 momentum scores:", out_scores_path)
     print("\nCoverage (last 12 months):")
     print(rep.tail(12).to_string())
 
-    # sanity checks:
-    # 1) First ~12 months should be mostly NaN (needs 12 months lookback + 1 month skip)
     print("\nFirst 15 rows non-null counts:")
     print(scores.notna().sum(axis=1).head(15).to_string())
+    return scores
+
+
+def main() -> None:
+    build_and_save_momentum_scores(
+        DATA_DIR_PROCESSED / PRICES_FILE,
+        DATA_DIR_PROCESSED / MOMENTUM_SCORES_FILE,
+        DATA_DIR_PROCESSED / MONTH_END_PRICES_FILE,
+    )
 
 
 if __name__ == "__main__":

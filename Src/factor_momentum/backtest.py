@@ -33,12 +33,12 @@ def _assert_exists(path: Path, label: str) -> None:
         )
 
 
-def _load_inputs() -> BacktestInputs:
-    _assert_exists(WEIGHTS_PATH, "weights file (monthly weights)")
-    _assert_exists(RETURNS_PATH, "returns file (daily returns)")
+def load_inputs(weights_path: Path, returns_path: Path) -> BacktestInputs:
+    _assert_exists(weights_path, "weights file")
+    _assert_exists(returns_path, "returns file")
 
-    weights_m = pd.read_parquet(WEIGHTS_PATH)
-    daily_returns = pd.read_parquet(RETURNS_PATH)
+    weights_m: pd.DataFrame = pd.read_parquet(weights_path)
+    daily_returns: pd.DataFrame = pd.read_parquet(returns_path)
 
     # Normalize index types
     weights_m.index = pd.to_datetime(weights_m.index)
@@ -53,6 +53,8 @@ def _load_inputs() -> BacktestInputs:
     if not common:
         raise ValueError(
             "No overlapping tickers between weights and daily returns.\n"
+            f"weights_path={weights_path}\n"
+            f"returns_path={returns_path}\n"
             f"weights columns sample: {list(weights_m.columns)[:10]}\n"
             f"returns columns sample: {list(daily_returns.columns)[:10]}\n"
             "If you have tickers like BRK-B vs BRK.B, normalize them upstream."
@@ -116,7 +118,12 @@ def _build_daily_weights(weights_m: pd.DataFrame, daily_index: pd.DatetimeIndex)
     return w_daily
 
 
-def run_backtest(cost_bps: int, out_dir: Path) -> None:
+def run_backtest_from_paths(
+    weights_path: Path,
+    returns_path: Path,
+    cost_bps: int,
+    out_dir: Path,
+) -> None:
     """
     Run backtest with turnover-based trading costs:
       turnover(t) = sum_i |w(t) - w(t-1)|
@@ -126,7 +133,7 @@ def run_backtest(cost_bps: int, out_dir: Path) -> None:
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    inp = _load_inputs()
+    inp: BacktestInputs = load_inputs(weights_path, returns_path)
     daily_index = inp.daily_returns.index
 
     # Build daily weights with next-day application to avoid look-ahead
@@ -156,8 +163,8 @@ def run_backtest(cost_bps: int, out_dir: Path) -> None:
 
     # Meta for traceability
     meta_lines = [
-        f"weights_path={WEIGHTS_PATH}",
-        f"returns_path={RETURNS_PATH}",
+        f"weights_path={weights_path}",
+        f"returns_path={returns_path}",
         f"cost_bps={cost_bps}",
         f"bps_rate={bps_rate}",
         f"start={net.index.min().date()}",
@@ -172,6 +179,10 @@ def run_backtest(cost_bps: int, out_dir: Path) -> None:
     print(f"Backtest complete ✅ cost={cost_bps} bps")
     print(f"Saved: {out_dir / STRATEGY_RETURNS_FILE}")
     print(f"Saved: {out_dir / EQUITY_CURVE_FILE}")
+
+
+def run_backtest(cost_bps: int, out_dir: Path) -> None:
+    run_backtest_from_paths(WEIGHTS_PATH, RETURNS_PATH, cost_bps, out_dir)
 
 
 def main() -> None:

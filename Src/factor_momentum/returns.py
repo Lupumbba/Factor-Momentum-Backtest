@@ -1,31 +1,29 @@
-import os
+from pathlib import Path
+
 import pandas as pd
 
-from .config import DATA_DIR_PROCESSED
+from .config import DATA_DIR_PROCESSED, PRICES_FILE, RETURNS_FILE
 
-def main():
-    # 1) Load cleaned processed prices from result of data_clean.py 
-    prices = pd.read_parquet(f"{DATA_DIR_PROCESSED}/prices.parquet")
 
-    # 2) Make sure dates are datetime + sorted
+def compute_and_save_returns(prices_path: Path, out_path: Path) -> pd.DataFrame:
+    prices: pd.DataFrame = pd.read_parquet(prices_path)
     prices.index = pd.to_datetime(prices.index)
     prices = prices.sort_index()
 
-    # 3) Compute daily simple returns: r_t = P_t / P_{t-1} - 1
-    returns = prices.pct_change()
-
-    # 4) Drop the first row (it will be NaN because there's no previous day)
+    returns: pd.DataFrame = prices.pct_change()
     returns = returns.dropna(how="all")
 
-    # 5) Save returns
-    os.makedirs(DATA_DIR_PROCESSED, exist_ok=True)
-    returns.to_parquet(f"{DATA_DIR_PROCESSED}/returns.parquet")
-
-    # 6) Print quick summary
-    print(f"Saved returns: {DATA_DIR_PROCESSED}/returns.parquet")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    returns.to_parquet(out_path)
+    print(f"Saved returns: {out_path}")
     print("Returns shape:", returns.shape)
     print(returns.head())
     print(returns.tail())
+    return returns
+
+
+def main() -> None:
+    compute_and_save_returns(DATA_DIR_PROCESSED / PRICES_FILE, DATA_DIR_PROCESSED / RETURNS_FILE)
 
 if __name__ == "__main__":
     main()

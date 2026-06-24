@@ -22,3 +22,16 @@ Results/*
 # …and the generated local website
 !Results/site/
 !Results/site/**
+# …and lightweight generated result summaries
+!Results/latest_selection.csv
+!Results/cost_grid_metrics.csv
+!Results/universe_comparison.csv
+!Results/universes/
+Results/universes/**
+!Results/universes/*/
+!Results/universes/*/latest_selection.csv
+!Results/universes/*/cost_grid_metrics.csv
+!Results/strategies/
+Results/strategies/**
+!Results/strategies/*/
+!Results/strategies/*/*.csv

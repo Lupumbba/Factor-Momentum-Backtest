@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>ETF 双动量轮动看板</title>
+  <style>
+    :root {
+      --ink: #18201d;
+      --muted: #5f6a64;
+      --paper: #f3f5ee;
+      --panel: #ffffff;
+      --line: #d8ddd5;
+      --green: #0b7464;
+      --green-soft: #dcefe9;
+      --blue: #284f9f;
+      --blue-soft: #e1e8fb;
+      --red: #b83e4f;
+      --red-soft: #f4dce0;
+      --gold: #a5691f;
+      --shadow: 0 16px 42px rgba(24, 32, 29, 0.08);
+    }
+
+    * { box-sizing: border-box; letter-spacing: 0; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(11, 116, 100, 0.09) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(40, 79, 159, 0.07) 1px, transparent 1px),
+        var(--paper);
+      background-size: 30px 30px;
+      font-family: "Avenir Next", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+
+    .shell {
+      width: min(1160px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 30px 0 44px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 20px;
+      align-items: end;
+      padding-bottom: 18px;
+      border-bottom: 2px solid var(--ink);
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--green);
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 760px;
+      font-family: "Baskerville", "Songti SC", "STSong", serif;
+      font-size: 2.5rem;
+      line-height: 1.08;
+    }
+
+    .stamp {
+      display: grid;
+      gap: 6px;
+      justify-items: end;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .stamp strong {
+      color: var(--ink);
+      font-size: 1.12rem;
+    }
+
+    .notice {
+      margin: 18px 0;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--gold);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.76);
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 20px 0;
+    }
+
+    .kpi {
+      min-height: 118px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .kpi span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.84rem;
+      font-weight: 800;
+    }
+
+    .kpi strong {
+      display: block;
+      margin-top: 12px;
+      font-size: 2rem;
+      line-height: 1;
+    }
+
+    .kpi small {
+      display: block;
+      margin-top: 10px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .grid-two {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 1.05rem;
+      line-height: 1.2;
+    }
+
+    .panel-subtitle {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.55;
+    }
+
+    .allocation {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 18px;
+      align-items: center;
+      padding: 22px;
+    }
+
+    .allocation-code {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 150px;
+      height: 150px;
+      border: 2px solid var(--ink);
+      border-radius: 50%;
+      background: var(--green-soft);
+      color: var(--green);
+      font-size: 2.2rem;
+      font-weight: 900;
+    }
+
+    .allocation h2 {
+      margin: 0 0 10px;
+      font-size: 1.7rem;
+    }
+
+    .allocation p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 28px;
+      margin-bottom: 10px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: var(--green);
+      background: var(--green-soft);
+    }
+
+    .badge.defensive {
+      color: var(--red);
+      background: var(--red-soft);
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .chart-box {
+      min-height: 330px;
+      padding: 16px;
+    }
+
+    .chart {
+      width: 100%;
+      min-height: 250px;
+    }
+
+    .chart svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      min-width: 680px;
+      border-collapse: collapse;
+      background: #fff;
+    }
+
+    th, td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+      font-size: 0.9rem;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      background: #fafbf8;
+    }
+
+    td.numeric, th.numeric {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .rules {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .rule {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.86);
+    }
+
+    .rule strong {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .rule p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    @media (max-width: 880px) {
+      .topbar,
+      .grid-two,
+      .chart-grid,
+      .rules,
+      .allocation {
+        grid-template-columns: 1fr;
+      }
+
+      .stamp {
+        justify-items: start;
+      }
+
+      .kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 560px) {
+      .shell {
+        width: min(100% - 20px, 1160px);
+        padding-top: 16px;
+      }
+
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">ETF 双动量 · 月度资产轮动</p>
+        <h1>在股票、债券、黄金和防守资产之间选择最强趋势</h1>
+      </div>
+      <div class="stamp">
+        <span>信号日期</span>
+        <strong id="signalDate">--</strong>
+        <span id="generatedAt">--</span>
+      </div>
+    </header>
+
+    <section class="notice">
+      这套策略每月比较 SPY、QQQ、IWM、TLT、GLD 的 6 个月收益，选择最强资产；如果最强资产的 6 个月收益不为正，则切到 SHY。它用于研究资产轮动，不是投资建议。
+    </section>
+
+    <section class="kpi-grid" aria-label="核心指标">
+      <div class="kpi">
+        <span>当前目标资产</span>
+        <strong id="selectedTicker">--</strong>
+        <small id="selectedType">--</small>
+      </div>
+      <div class="kpi">
+        <span>6 个月动量</span>
+        <strong id="selectedScore">--</strong>
+        <small>当前被选资产对应的趋势分数</small>
+      </div>
+      <div class="kpi">
+        <span id="sharpeLabel">回测 Sharpe</span>
+        <strong id="sharpeValue">--</strong>
+        <small>交易成本已计入指定基准情景</small>
+      </div>
+      <div class="kpi">
+        <span>历史最大回撤</span>
+        <strong id="drawdownValue">--</strong>
+        <small>用于衡量策略曾经承受的最大下跌</small>
+      </div>
+    </section>
+
+    <section class="grid-two">
+      <article class="panel">
+        <div class="allocation">
+          <div class="allocation-code" id="allocationCode">--</div>
+          <div>
+            <div class="badge" id="allocationBadge">趋势持有</div>
+            <h2 id="allocationTitle">--</h2>
+            <p id="allocationText">--</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">最新资产排名</h2>
+          <p class="panel-subtitle">按 6 个月收益排序。只有最高资产为正收益时才持有风险资产，否则进入防守。</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="numeric">排名</th>
+                <th>资产</th>
+                <th class="numeric">6 个月动量</th>
+                <th class="numeric">目标仓位</th>
+              </tr>
+            </thead>
+            <tbody id="rankingTable"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <section class="chart-grid">
+      <article class="panel chart-box">
+        <div class="panel-header">
+          <h2 class="panel-title">策略净值曲线</h2>
+          <p class="panel-subtitle" id="equitySubtitle">--</p>
+        </div>
+        <div class="chart" id="equityChart"></div>
+      </article>
+
+      <article class="panel chart-box">
+        <div class="panel-header">
+          <h2 class="panel-title">历史回撤</h2>
+          <p class="panel-subtitle">越接近 0 表示回撤越浅，向下越多表示历史压力越大。</p>
+        </div>
+        <div class="chart" id="drawdownChart"></div>
+      </article>
+    </section>
+
+    <section class="grid-two">
+      <article class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">最近 12 次月度选择</h2>
+          <p class="panel-subtitle">用来观察策略是否频繁切换，以及是否多次进入防守状态。</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>信号日期</th>
+                <th>选择资产</th>
+                <th class="numeric">分数</th>
+                <th>状态</th>
+              </tr>
+            </thead>
+            <tbody id="rotationTable"></tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">交易成本压力测试</h2>
+          <p class="panel-subtitle">同一套 ETF 双动量规则，在不同交易成本假设下的表现。</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="numeric">成本</th>
+                <th class="numeric">累计收益</th>
+                <th class="numeric">年化收益</th>
+                <th class="numeric">Sharpe</th>
+                <th class="numeric">最大回撤</th>
+              </tr>
+            </thead>
+            <tbody id="costTable"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <section class="rules">
+      <div class="rule">
+        <strong>1. 先选相对最强</strong>
+        <p>每月只在几个高流动性 ETF 之间比较，不做单只股票判断。</p>
+      </div>
+      <div class="rule">
+        <strong>2. 再看绝对趋势</strong>
+        <p>如果最强资产自己也没有正收益，说明风险资产趋势不足，切到 SHY。</p>
+      </div>
+      <div class="rule">
+        <strong>3. 每月调一次</strong>
+        <p>这套策略不适合日内频繁交易，重点是中期资产轮动。</p>
+      </div>
+    </section>
+  </main>
+
+  <script id="dashboard-data" type="application/json">{"strategy_name":"ETF 双动量轮动","signal_date":"2026-06-23","generated_at":"2026-06-24 14:41","lookback_months":6,"selected_ticker":"IWM","selected_score":0.2046996882946186,"defensive_signal":false,"base_cost_bps":10,"base_metric":{"cost_bps":10,"periods":2631,"total_return":0.9690187478003058,"CAGR":0.067047041803494,"annual_vol":0.1983736797733299,"Sharpe":0.4269226025452092,"max_drawdown":-0.4374034624180892},"metrics":[{"cost_bps":0,"periods":2631,"total_return":1.14758970784772,"CAGR":0.0759563491673001,"annual_vol":0.1984527031181833,"Sharpe":0.4687422213625248,"max_drawdown":-0.4260382060491789},{"cost_bps":10,"periods":2631,"total_return":0.9690187478003058,"CAGR":0.067047041803494,"annual_vol":0.1983736797733299,"Sharpe":0.4269226025452092,"max_drawdown":-0.4374034624180892},{"cost_bps":50,"periods":2631,"total_return":0.3889653281100922,"CAGR":0.0319701507218499,"annual_vol":0.1988786014004287,"Sharpe":0.2582399226703809,"max_drawdown":-0.4825870152920265}],"ranking":[{"ticker":"IWM","rank":1,"momentum":0.2046996882946186,"selected":true,"target_weight":1.0,"role":"risk_asset"},{"ticker":"QQQ","rank":2,"momentum":0.1644530578932981,"selected":false,"target_weight":0.0,"role":"risk_asset"},{"ticker":"SPY","rank":3,"momentum":0.0814735785260416,"selected":false,"target_weight":0.0,"role":"risk_asset"},{"ticker":"TLT","rank":4,"momentum":0.0076904765790841,"selected":false,"target_weight":0.0,"role":"risk_asset"},{"ticker":"GLD","rank":5,"momentum":-0.0479170102984024,"selected":false,"target_weight":0.0,"role":"risk_asset"}],"rotations":[{"signal_date":"2026-06-23","selected_ticker":"IWM","selected_score":0.2046996882946186,"defensive_signal":false},{"signal_date":"2026-05-29","selected_ticker":"QQQ","selected_score":0.1953061411030394,"defensive_signal":false},{"signal_date":"2026-04-30","selected_ticker":"GLD","selected_score":0.1508747399804817,"defensive_signal":false},{"signal_date":"2026-03-31","selected_ticker":"GLD","selected_score":0.2104819170880323,"defensive_signal":false},{"signal_date":"2026-02-27","selected_ticker":"GLD","selected_score":0.5208915926074678,"defensive_signal":false},{"signal_date":"2026-01-30","selected_ticker":"GLD","selected_score":0.4686758144862402,"defensive_signal":false},{"signal_date":"2025-12-31","selected_ticker":"GLD","selected_score":0.3001017452875854,"defensive_signal":false},{"signal_date":"2025-11-28","selected_ticker":"GLD","selected_score":0.2776020984352705,"defensive_signal":false},{"signal_date":"2025-10-31","selected_ticker":"QQQ","selected_score":0.3260700501655171,"defensive_signal":false},{"signal_date":"2025-09-30","selected_ticker":"QQQ","selected_score":0.2832487723053321,"defensive_signal":false},{"signal_date":"2025-08-29","selected_ticker":"GLD","selected_score":0.2081514057711342,"defensive_signal":false},{"signal_date":"2025-07-31","selected_ticker":"GLD","selected_score":0.1717202750453408,"defensive_signal":false}],"equity_points":[{"date":"2016-01-05","value":1.0},{"date":"2016-01-22","value":1.0},{"date":"2016-02-09","value":1.0},{"date":"2016-02-26","value":1.0},{"date":"2016-03-15","value":1.0},{"date":"2016-04-01","value":1.0},{"date":"2016-04-19","value":1.0},{"date":"2016-05-05","value":1.0},{"date":"2016-05-23","value":1.0},{"date":"2016-06-09","value":1.0},{"date":"2016-06-27","value":1.0},{"date":"2016-07-14","value":1.0},{"date":"2016-08-01","value":1.0008607962561191},{"date":"2016-08-17","value":0.9952840976935836},{"date":"2016-09-02","value":0.9745583301678716},{"date":"2016-09-21","value":0.9699402651513652},{"date":"2016-10-07","value":0.9640658476479568},{"date":"2016-10-25","value":0.9491530160543323},{"date":"2016-11-10","value":0.9183683261682656},{"date":"2016-11-29","value":0.9436777182750122},{"date":"2016-12-15","value":0.9625439875819177},{"date":"2017-01-04","value":0.9780134303726643},{"date":"2017-01-23","value":0.9503296973400752},{"date":"2017-02-08","value":0.9582797462779199},{"date":"2017-02-27","value":0.9937715413156201},{"date":"2017-03-15","value":0.977658371593685},{"date":"2017-03-31","value":0.9786940409853914},{"date":"2017-04-19","value":0.9701687056562242},{"date":"2017-05-05","value":1.0008714509351266},{"date":"2017-05-23","value":0.9894221234259689},{"date":"2017-06-09","value":0.9706055150384939},{"date":"2017-06-27","value":0.9596917213342132},{"date":"2017-07-14","value":0.9881288254562929},{"date":"2017-08-01","value":0.9981408917552301},{"date":"2017-08-17","value":0.9826359742916595},{"date":"2017-09-05","value":1.0059969371682354},{"date":"2017-09-21","value":1.0065966258420245},{"date":"2017-10-09","value":1.0277097408561602},{"date":"2017-10-25","value":1.0272913429411386},{"date":"2017-11-10","value":1.070841411880738},{"date":"2017-11-29","value":1.0720958178943854},{"date":"2017-12-15","value":1.0690123703984071},{"date":"2018-01-04","value":1.103831347776489},{"date":"2018-01-23","value":1.167178547540311},{"date":"2018-02-08","value":1.0565959324696668},{"date":"2018-02-27","value":1.1587782033595098},{"date":"2018-03-15","value":1.1810872377289388},{"date":"2018-04-03","value":1.0845865375561832},{"date":"2018-04-19","value":1.137346833452306},{"date":"2018-05-07","value":1.1465196422078372},{"date":"2018-05-23","value":1.1696929136276908},{"date":"2018-06-11","value":1.2063149031542502},{"date":"2018-06-27","value":1.1730947095676958},{"date":"2018-07-16","value":1.238408858704755},{"date":"2018-08-01","value":1.216292195695489},{"date":"2018-08-17","value":1.235296960220158},{"date":"2018-09-05","value":1.2605387313443923},{"date":"2018-09-21","value":1.250339261692583},{"date":"2018-10-09","value":1.1965388543392266},{"date":"2018-10-25","value":1.1394526934433544},{"date":"2018-11-12","value":1.107945696737462},{"date":"2018-11-29","value":1.1200692170403765},{"date":"2018-12-18","value":1.041944934502482},{"date":"2019-01-07","value":1.0299320981789757},{"date":"2019-01-24","value":1.0234242029551914},{"date":"2019-02-11","value":1.0446381513685643},{"date":"2019-02-28","value":1.047934334592406},{"date":"2019-03-18","value":1.0399051835562492},{"date":"2019-04-03","value":1.007556728402248},{"date":"2019-04-22","value":0.9976869555356361},{"date":"2019-05-08","value":0.9865724416324354},{"date":"2019-05-24","value":0.9461579126086335},{"date":"2019-06-12","value":0.9157972498165655},{"date":"2019-06-28","value":0.9307244719156627},{"date":"2019-07-17","value":0.9560472010267108},{"date":"2019-08-02","value":0.9319222685546932},{"date":"2019-08-20","value":0.9300318867818845},{"date":"2019-09-06","value":0.9228704856166292},{"date":"2019-09-24","value":0.9088170561317277},{"date":"2019-10-10","value":0.9017201633241889},{"date":"2019-10-28","value":0.8703946977965412},{"date":"2019-11-13","value":0.8659168223096235},{"date":"2019-12-02","value":0.8545751278140175},{"date":"2019-12-18","value":0.8821488710606605},{"date":"2020-01-07","value":0.909290089197335},{"date":"2020-01-24","value":0.939539362692871},{"date":"2020-02-11","value":0.9788170294509231},{"date":"2020-02-28","value":0.8682406610310257},{"date":"2020-03-16","value":0.7142523598668845},{"date":"2020-03-17","value":0.7684225188273647},{"date":"2020-04-02","value":0.8198200047720394},{"date":"2020-04-21","value":0.8353773709234008},{"date":"2020-05-07","value":0.8113120673587014},{"date":"2020-05-26","value":0.7975903331797349},{"date":"2020-06-11","value":0.794724661378578},{"date":"2020-06-29","value":0.8154749350559171},{"date":"2020-07-16","value":0.8343894940530939},{"date":"2020-08-03","value":0.8529690752355015},{"date":"2020-08-19","value":0.8373469589931742},{"date":"2020-09-04","value":0.8150976034273733},{"date":"2020-09-23","value":0.759278300416414},{"date":"2020-10-09","value":0.8212200692556154},{"date":"2020-10-27","value":0.8124531759909741},{"date":"2020-11-12","value":0.8289519379421945},{"date":"2020-12-01","value":0.867471983701961},{"date":"2020-12-17","value":0.9349067875046232},{"date":"2021-01-06","value":0.9741529719736316},{"date":"2021-01-25","value":1.023019950520374},{"date":"2021-02-10","value":1.0806033970600262},{"date":"2021-03-01","value":1.076745518545585},{"date":"2021-03-17","value":1.1064658969337542},{"date":"2021-04-06","value":1.070371777391144},{"date":"2021-04-22","value":1.0573448410162307},{"date":"2021-05-10","value":1.0481827675672954},{"date":"2021-05-26","value":1.0657910122826804},{"date":"2021-06-14","value":1.1040468848003928},{"date":"2021-06-30","value":1.096161406571174},{"date":"2021-07-19","value":1.0118598697445793},{"date":"2021-08-04","value":1.0554125806801153},{"date":"2021-08-20","value":1.0659431617963027},{"date":"2021-09-08","value":1.0858567324634782},{"date":"2021-09-24","value":1.065792398159545},{"date":"2021-10-12","value":1.01957274530307},{"date":"2021-10-28","value":1.0968815708798119},{"date":"2021-11-15","value":1.1265430724889691},{"date":"2021-12-02","value":1.1131253313906468},{"date":"2021-12-20","value":1.088192155264667},{"date":"2022-01-06","value":1.0977107697218706},{"date":"2022-01-25","value":0.9864874693899579},{"date":"2022-02-10","value":1.0343489762868976},{"date":"2022-03-01","value":1.0213825983282852},{"date":"2022-03-17","value":1.0172772963075396},{"date":"2022-04-04","value":1.0143529304379926},{"date":"2022-04-21","value":1.0238570551554875},{"date":"2022-05-09","value":0.9722312153586408},{"date":"2022-05-25","value":0.9733559450588122},{"date":"2022-06-13","value":0.9556411304884499},{"date":"2022-06-30","value":0.9473743199959315},{"date":"2022-07-19","value":0.9422732081127234},{"date":"2022-08-04","value":0.9476207552965407},{"date":"2022-08-22","value":0.943157966737861},{"date":"2022-09-08","value":0.9412119752576574},{"date":"2022-09-26","value":0.9284945896723018},{"date":"2022-10-12","value":0.9306492863015428},{"date":"2022-10-28","value":0.930649286301543},{"date":"2022-11-15","value":0.9337658371186017},{"date":"2022-12-02","value":0.9372330048586021},{"date":"2022-12-20","value":0.8658022343524586},{"date":"2023-01-09","value":0.8906365842586068},{"date":"2023-01-26","value":0.9441108602325706},{"date":"2023-02-13","value":0.9198779589910346},{"date":"2023-03-02","value":0.9101714966301938},{"date":"2023-03-20","value":0.9804636178177797},{"date":"2023-04-05","value":0.9599743838481721},{"date":"2023-04-24","value":0.9600655582459477},{"date":"2023-05-10","value":0.9990901804760614},{"date":"2023-05-26","value":0.9576444695223326},{"date":"2023-06-14","value":1.0127172576274304},{"date":"2023-07-03","value":1.026273554809234},{"date":"2023-07-20","value":1.0442052745727992},{"date":"2023-08-07","value":1.0398540341546691},{"date":"2023-08-23","value":1.0230030247500874},{"date":"2023-09-11","value":1.04478728159285},{"date":"2023-09-27","value":0.9854320318750575},{"date":"2023-10-13","value":1.0138535611455075},{"date":"2023-10-31","value":0.9738576394207078},{"date":"2023-11-16","value":1.0712240662376264},{"date":"2023-12-05","value":1.0749433862730515},{"date":"2023-12-21","value":1.1340473480271371},{"date":"2024-01-10","value":1.1366750283983091},{"date":"2024-01-29","value":1.1913522772876317},{"date":"2024-02-14","value":1.2054599450117192},{"date":"2024-03-04","value":1.23551140374539},{"date":"2024-03-20","value":1.236448656215504},{"date":"2024-04-08","value":1.2276164866938648},{"date":"2024-04-24","value":1.1883582500460836},{"date":"2024-05-10","value":1.231684253635129},{"date":"2024-05-29","value":1.2717503122402103},{"date":"2024-06-14","value":1.2898971837864266},{"date":"2024-07-03","value":1.327155710840893},{"date":"2024-07-22","value":1.3035876514537525},{"date":"2024-08-07","value":1.236974989009166},{"date":"2024-08-23","value":1.3013055464228729},{"date":"2024-09-11","value":1.3025954986269446},{"date":"2024-09-27","value":1.3742172427938104},{"date":"2024-10-15","value":1.3792649413873619},{"date":"2024-10-31","value":1.4218341343446557},{"date":"2024-11-18","value":1.352175431619906},{"date":"2024-12-05","value":1.353117713015553},{"date":"2024-12-23","value":1.2621106067274859},{"date":"2025-01-13","value":1.27580229702996},{"date":"2025-01-30","value":1.3397117270919114},{"date":"2025-02-18","value":1.40538654537214},{"date":"2025-03-06","value":1.392666877708713},{"date":"2025-03-24","value":1.4393919546868246},{"date":"2025-04-09","value":1.4816002995736952},{"date":"2025-04-28","value":1.6045910982055134},{"date":"2025-05-14","value":1.521991526446169},{"date":"2025-06-02","value":1.6180894854644383},{"date":"2025-06-18","value":1.6107692043920518},{"date":"2025-07-08","value":1.579099953863861},{"date":"2025-07-24","value":1.6108210134068481},{"date":"2025-08-11","value":1.6018913256913148},{"date":"2025-08-27","value":1.6234887136181244},{"date":"2025-09-15","value":1.759510667751569},{"date":"2025-10-01","value":1.8506466590417774},{"date":"2025-10-17","value":1.8527328392203137},{"date":"2025-11-04","value":1.8997315601328455},{"date":"2025-11-20","value":1.7967149267657165},{"date":"2025-12-09","value":1.893604041720571},{"date":"2025-12-26","value":2.0370174039426208},{"date":"2026-01-14","value":2.0819868943235837},{"date":"2026-01-29","value":2.4239500452405944},{"date":"2026-02-02","value":2.0878036043602552},{"date":"2026-02-19","value":2.2463208118237055},{"date":"2026-03-09","value":2.309717939132919},{"date":"2026-03-25","value":2.0348179017245696},{"date":"2026-04-13","value":2.128031597453799},{"date":"2026-04-29","value":2.0402924172486467},{"date":"2026-06-23","value":1.9690187478003058}],"drawdown_points":[{"date":"2016-01-05","value":0.0},{"date":"2016-01-22","value":0.0},{"date":"2016-02-09","value":0.0},{"date":"2016-02-26","value":0.0},{"date":"2016-03-15","value":0.0},{"date":"2016-04-01","value":0.0},{"date":"2016-04-19","value":0.0},{"date":"2016-05-05","value":0.0},{"date":"2016-05-23","value":0.0},{"date":"2016-06-09","value":0.0},{"date":"2016-06-27","value":0.0},{"date":"2016-07-14","value":0.0},{"date":"2016-08-01","value":0.0},{"date":"2016-08-17","value":-0.01358719746994852},{"date":"2016-09-02","value":-0.034128229399424836},{"date":"2016-09-21","value":-0.038705132080532945},{"date":"2016-10-07","value":-0.04452718896479024},{"date":"2016-10-25","value":-0.05930709757582342},{"date":"2016-11-10","value":-0.08981739337568906},{"date":"2016-11-29","value":-0.064733592221625},{"date":"2016-12-15","value":-0.04603548419052417},{"date":"2017-01-04","value":-0.030703925641402785},{"date":"2017-01-23","value":-0.058140904438161445},{"date":"2017-02-08","value":-0.05026171690647774},{"date":"2017-02-27","value":-0.015086271934444895},{"date":"2017-03-15","value":-0.031055819664473683},{"date":"2017-03-31","value":-0.030029381535365496},{"date":"2017-04-19","value":-0.038478727741177554},{"date":"2017-05-05","value":-0.00804964614918724},{"date":"2017-05-23","value":-0.019396922029073393},{"date":"2017-06-09","value":-0.03804581178488464},{"date":"2017-06-27","value":-0.04886232724918449},{"date":"2017-07-14","value":-0.020678692407733013},{"date":"2017-08-01","value":-0.010755866955244109},{"date":"2017-08-17","value":-0.026122583979739766},{"date":"2017-09-05","value":-0.010328835794881197},{"date":"2017-09-21","value":-0.011226603826602566},{"date":"2017-10-09","value":-0.001151367471719844},{"date":"2017-10-25","value":-0.010802636358198892},{"date":"2017-11-10","value":-0.005307545474244613},{"date":"2017-11-29","value":-0.017434331574804673},{"date":"2017-12-15","value":-0.020260282016333453},{"date":"2018-01-04","value":0.0},{"date":"2018-01-23","value":0.0},{"date":"2018-02-08","value":-0.102263804398249},{"date":"2018-02-27","value":-0.015444690006827022},{"date":"2018-03-15","value":-0.014648436595900538},{"date":"2018-04-03","value":-0.09515655889824104},{"date":"2018-04-19","value":-0.05113996267553367},{"date":"2018-05-07","value":-0.04348731758773383},{"date":"2018-05-23","value":-0.024154436414073444},{"date":"2018-06-11","value":-0.005401730797294779},{"date":"2018-06-27","value":-0.04242603816148616},{"date":"2018-07-16","value":-0.002394203565497688},{"date":"2018-08-01","value":-0.03741355893399656},{"date":"2018-08-17","value":-0.022372988327820864},{"date":"2018-09-05","value":-0.007109019738599565},{"date":"2018-09-21","value":-0.0151428557238934},{"date":"2018-10-09","value":-0.05751992662798644},{"date":"2018-10-25","value":-0.10248509337919898},{"date":"2018-11-12","value":-0.12730227040559816},{"date":"2018-11-29","value":-0.11775291372304553},{"date":"2018-12-18","value":-0.1792892184334448},{"date":"2019-01-07","value":-0.1887513924518862},{"date":"2019-01-24","value":-0.1938774788683585},{"date":"2019-02-11","value":-0.1771678470961524},{"date":"2019-02-28","value":-0.174571536081773},{"date":"2019-03-18","value":-0.18089587300591825},{"date":"2019-04-03","value":-0.20637584323542724},{"date":"2019-04-22","value":-0.2141499863163273},{"date":"2019-05-08","value":-0.22290457697670985},{"date":"2019-05-24","value":-0.2547379672101451},{"date":"2019-06-12","value":-0.2786522091857583},{"date":"2019-06-28","value":-0.26689445528735545},{"date":"2019-07-17","value":-0.2469484522770813},{"date":"2019-08-02","value":-0.26595098449228327},{"date":"2019-08-20","value":-0.267439985159062},{"date":"2019-09-06","value":-0.27308081986426147},{"date":"2019-09-24","value":-0.28415031184442185},{"date":"2019-10-10","value":-0.2897403351267466},{"date":"2019-10-28","value":-0.3144145251389163},{"date":"2019-11-13","value":-0.3179416219834158},{"date":"2019-12-02","value":-0.32687515642036047},{"date":"2019-12-18","value":-0.3051560927526882},{"date":"2020-01-07","value":-0.283777716974841},{"date":"2020-01-24","value":-0.2599512132218419},{"date":"2020-02-11","value":-0.2290132974878364},{"date":"2020-02-28","value":-0.31611119944368027},{"date":"2020-03-16","value":-0.43740346241808925},{"date":"2020-03-17","value":-0.39473514855055414},{"date":"2020-04-02","value":-0.3542507913994234},{"date":"2020-04-21","value":-0.3419966907167442},{"date":"2020-05-07","value":-0.3609522549152031},{"date":"2020-05-26","value":-0.37176047981227545},{"date":"2020-06-11","value":-0.374017689061787},{"date":"2020-06-29","value":-0.3576732808656087},{"date":"2020-07-16","value":-0.3427748136016242},{"date":"2020-08-03","value":-0.32814019896080926},{"date":"2020-08-19","value":-0.340445301472859},{"date":"2020-09-04","value":-0.3579704943991817},{"date":"2020-09-23","value":-0.401937792750221},{"date":"2020-10-09","value":-0.35314799990007417},{"date":"2020-10-27","value":-0.3600534356720423},{"date":"2020-11-12","value":-0.3470578239391322},{"date":"2020-12-01","value":-0.31671666500200213},{"date":"2020-12-17","value":-0.26360016267926023},{"date":"2021-01-06","value":-0.23268704466074908},{"date":"2021-01-25","value":-0.1941958971654708},{"date":"2021-02-10","value":-0.14883903246952634},{"date":"2021-03-01","value":-0.15187777509970923},{"date":"2021-03-17","value":-0.1284678671787547},{"date":"2021-04-06","value":-0.15689819212094258},{"date":"2021-04-22","value":-0.1671591442880338},{"date":"2021-05-10","value":-0.17437585239999975},{"date":"2021-05-26","value":-0.16050633223262245},{"date":"2021-06-14","value":-0.13037325514394305},{"date":"2021-06-30","value":-0.13658442503040014},{"date":"2021-07-19","value":-0.20298637957251076},{"date":"2021-08-04","value":-0.16868113152376096},{"date":"2021-08-20","value":-0.16038648833098712},{"date":"2021-09-08","value":-0.14470112761291598},{"date":"2021-09-24","value":-0.16050524061631244},{"date":"2021-10-12","value":-0.19691116396550068},{"date":"2021-10-28","value":-0.1360171718166967},{"date":"2021-11-15","value":-0.1126536394821277},{"date":"2021-12-02","value":-0.12322241756147978},{"date":"2021-12-20","value":-0.14286158061865262},{"date":"2022-01-06","value":-0.13536403516119278},{"date":"2022-01-25","value":-0.222971507227269},{"date":"2022-02-10","value":-0.18527234153086258},{"date":"2022-03-01","value":-0.1954855935330727},{"date":"2022-03-17","value":-0.1987192247149563},{"date":"2022-04-04","value":-0.20102266563482452},{"date":"2022-04-21","value":-0.1935365333386626},{"date":"2022-05-09","value":-0.23420075841014498},{"date":"2022-05-25","value":-0.23331484039210737},{"date":"2022-06-13","value":-0.24726830264324906},{"date":"2022-06-30","value":-0.25377983725099396},{"date":"2022-07-19","value":-0.25779783991303007},{"date":"2022-08-04","value":-0.2535857270811843},{"date":"2022-08-22","value":-0.25710094037574205},{"date":"2022-09-08","value":-0.2586337432482877},{"date":"2022-09-26","value":-0.26865087094633067},{"date":"2022-10-12","value":-0.26695367688543004},{"date":"2022-10-28","value":-0.2669536768854298},{"date":"2022-11-15","value":-0.2644988572762904},{"date":"2022-12-02","value":-0.26176786655740303},{"date":"2022-12-20","value":-0.31803187970123636},{"date":"2023-01-09","value":-0.29847055928375743},{"date":"2023-01-26","value":-0.2563503729139729},{"date":"2023-02-13","value":-0.27543794909866115},{"date":"2023-03-02","value":-0.28308345707765603},{"date":"2023-03-20","value":-0.22771632604459346},{"date":"2023-04-05","value":-0.24385512058936087},{"date":"2023-04-24","value":-0.24378330507514367},{"date":"2023-05-10","value":-0.2130447054138198},{"date":"2023-05-26","value":-0.2456903287121931},{"date":"2023-06-14","value":-0.20231103920073146},{"date":"2023-07-03","value":-0.1916331243831514},{"date":"2023-07-20","value":-0.1775088119990088},{"date":"2023-08-07","value":-0.1809361619539781},{"date":"2023-08-23","value":-0.19420922911968508},{"date":"2023-09-11","value":-0.17705038140398777},{"date":"2023-09-27","value":-0.22380284573573084},{"date":"2023-10-13","value":-0.20141600481116162},{"date":"2023-10-31","value":-0.23291966982385126},{"date":"2023-11-16","value":-0.15622686811700093},{"date":"2023-12-05","value":-0.15329726411194144},{"date":"2023-12-21","value":-0.10674273225653486},{"date":"2024-01-10","value":-0.10467298217692866},{"date":"2024-01-29","value":-0.061605247804486174},{"date":"2024-02-14","value":-0.050493033885575356},{"date":"2024-03-04","value":-0.026822343268606552},{"date":"2024-03-20","value":-0.026084095802928586},{"date":"2024-04-08","value":-0.03304094785048328},{"date":"2024-04-24","value":-0.06396355903195594},{"date":"2024-05-10","value":-0.029836881997243547},{"date":"2024-05-29","value":-0.007048400134114452},{"date":"2024-06-14","value":0.0},{"date":"2024-07-03","value":0.0},{"date":"2024-07-22","value":-0.04103698694262903},{"date":"2024-08-07","value":-0.09003950657711379},{"date":"2024-08-23","value":-0.042715780320339514},{"date":"2024-09-11","value":-0.041766848001951073},{"date":"2024-09-27","value":-0.007935830791900744},{"date":"2024-10-15","value":-0.004291835682769363},{"date":"2024-10-31","value":-0.015495166963743867},{"date":"2024-11-18","value":-0.06372816956158989},{"date":"2024-12-05","value":-0.06307571611031437},{"date":"2024-12-23","value":-0.12609075690657634},{"date":"2025-01-13","value":-0.11661037171281785},{"date":"2025-01-30","value":-0.07235827419120067},{"date":"2025-02-18","value":-0.026883788494270755},{"date":"2025-03-06","value":-0.03569112683759357},{"date":"2025-03-24","value":-0.013731228176527166},{"date":"2025-04-09","value":-0.009647413742250643},{"date":"2025-04-28","value":-0.020659682148768455},{"date":"2025-05-14","value":-0.0710732055390193},{"date":"2025-06-02","value":-0.012421125370397634},{"date":"2025-06-18","value":-0.01906477794552419},{"date":"2025-07-08","value":-0.038350894922719925},{"date":"2025-07-24","value":-0.019033227002474673},{"date":"2025-08-11","value":-0.0244712780766011},{"date":"2025-08-27","value":-0.01131878021159638},{"date":"2025-09-15","value":0.0},{"date":"2025-10-01","value":0.0},{"date":"2025-10-17","value":-0.012282477342297593},{"date":"2025-11-04","value":-0.02598417928677088},{"date":"2025-11-20","value":-0.07880207882684132},{"date":"2025-12-09","value":-0.02912583361336929},{"date":"2025-12-26","value":0.0},{"date":"2026-01-14","value":0.0},{"date":"2026-02-02","value":-0.1386771322042547},{"date":"2026-02-19","value":-0.07328089692510886},{"date":"2026-03-09","value":-0.04712642751527374},{"date":"2026-03-25","value":-0.1605363709042117},{"date":"2026-04-13","value":-0.12208108346449997},{"date":"2026-04-29","value":-0.15827786085990359},{"date":"2026-05-15","value":-0.158519835287539},{"date":"2026-06-23","value":-0.1876817958082686}]}</script>
+  <script>
+    const DATA = JSON.parse(document.getElementById("dashboard-data").textContent);
+    const pctFormatter = new Intl.NumberFormat("zh-CN", { style: "percent", maximumFractionDigits: 1 });
+    const pct2Formatter = new Intl.NumberFormat("zh-CN", { style: "percent", maximumFractionDigits: 2 });
+    const num = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 2 });
+
+    function setText(id, value) {
+      document.getElementById(id).textContent = value;
+    }
+
+    function pct(value) {
+      return pctFormatter.format(value);
+    }
+
+    function pct2(value) {
+      return pct2Formatter.format(value);
+    }
+
+    function renderRanking() {
+      document.getElementById("rankingTable").innerHTML = DATA.ranking.map((row) => `
+        <tr>
+          <td class="numeric">${row.rank}</td>
+          <td><strong>${row.ticker}</strong>${row.selected ? " · 当前选择" : ""}</td>
+          <td class="numeric">${pct(row.momentum)}</td>
+          <td class="numeric">${pct(row.target_weight)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderRotations() {
+      document.getElementById("rotationTable").innerHTML = DATA.rotations.map((row) => `
+        <tr>
+          <td>${row.signal_date}</td>
+          <td><strong>${row.selected_ticker}</strong></td>
+          <td class="numeric">${pct(row.selected_score)}</td>
+          <td>${row.defensive_signal ? "防守" : "趋势持有"}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderCostTable() {
+      document.getElementById("costTable").innerHTML = DATA.metrics.map((row) => `
+        <tr>
+          <td class="numeric">${row.cost_bps} bps</td>
+          <td class="numeric">${pct(row.total_return)}</td>
+          <td class="numeric">${pct(row.CAGR)}</td>
+          <td class="numeric">${num.format(row.Sharpe)}</td>
+          <td class="numeric">${pct(row.max_drawdown)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function scalePoints(points, width, height, pad) {
+      const values = points.map((point) => point.value);
+      let min = Math.min(...values);
+      let max = Math.max(...values);
+      if (min === max) {
+        min = min - 1;
+        max = max + 1;
+      }
+      const xStep = points.length > 1 ? (width - pad * 2) / (points.length - 1) : 0;
+      return points.map((point, index) => {
+        const x = pad + index * xStep;
+        const y = height - pad - ((point.value - min) / (max - min)) * (height - pad * 2);
+        return { x, y, value: point.value, date: point.date };
+      });
+    }
+
+    function renderLineChart(id, points, color, fillColor, formatter) {
+      const width = 760;
+      const height = 260;
+      const pad = 34;
+      const scaled = scalePoints(points, width, height, pad);
+      const line = scaled.map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(" ");
+      const area = `${pad},${height - pad} ${line} ${width - pad},${height - pad}`;
+      const first = points[0];
+      const last = points[points.length - 1];
+      const min = points.reduce((a, b) => a.value < b.value ? a : b);
+      const max = points.reduce((a, b) => a.value > b.value ? a : b);
+      document.getElementById(id).innerHTML = `
+        <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="趋势图">
+          <line x1="${pad}" y1="${height - pad}" x2="${width - pad}" y2="${height - pad}" stroke="#d8ddd5" />
+          <line x1="${pad}" y1="${pad}" x2="${pad}" y2="${height - pad}" stroke="#d8ddd5" />
+          <polygon points="${area}" fill="${fillColor}" opacity="0.72"></polygon>
+          <polyline points="${line}" fill="none" stroke="${color}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"></polyline>
+          <text x="${pad}" y="${height - 8}" fill="#5f6a64" font-size="13">${first.date}</text>
+          <text x="${width - pad}" y="${height - 8}" fill="#5f6a64" font-size="13" text-anchor="end">${last.date}</text>
+          <text x="${pad}" y="20" fill="#5f6a64" font-size="13">${formatter(max.value)}</text>
+          <text x="${width - pad}" y="20" fill="#5f6a64" font-size="13" text-anchor="end">${formatter(min.value)}</text>
+        </svg>
+      `;
+    }
+
+    function render() {
+      const defensiveText = DATA.defensive_signal ? "防守仓位" : "趋势持有";
+      setText("signalDate", DATA.signal_date);
+      setText("generatedAt", `生成时间 ${DATA.generated_at}`);
+      setText("selectedTicker", DATA.selected_ticker);
+      setText("selectedType", defensiveText);
+      setText("selectedScore", pct(DATA.selected_score));
+      setText("sharpeLabel", `${DATA.base_cost_bps} bps 成本 Sharpe`);
+      setText("sharpeValue", num.format(DATA.base_metric.Sharpe));
+      setText("drawdownValue", pct(DATA.base_metric.max_drawdown));
+      setText("allocationCode", DATA.selected_ticker);
+      setText("allocationTitle", `本月目标：100% ${DATA.selected_ticker}`);
+      setText("allocationText", DATA.defensive_signal
+        ? "风险资产的 6 个月动量没有转正，因此策略进入防守资产。"
+        : `当前最强资产的 ${DATA.lookback_months} 个月动量为 ${pct(DATA.selected_score)}，策略选择继续持有趋势资产。`
+      );
+      document.getElementById("allocationBadge").textContent = defensiveText;
+      document.getElementById("allocationBadge").className = DATA.defensive_signal ? "badge defensive" : "badge";
+      setText("equitySubtitle", `按 ${DATA.base_cost_bps} bps 交易成本计算，累计收益 ${pct2(DATA.base_metric.total_return)}。`);
+      renderRanking();
+      renderRotations();
+      renderCostTable();
+      renderLineChart("equityChart", DATA.equity_points, "#0b7464", "#dcefe9", (value) => num.format(value));
+      renderLineChart("drawdownChart", DATA.drawdown_points, "#b83e4f", "#f4dce0", (value) => pct(value));
+    }
+
+    render();
+  </script>
+</body>
+</html>

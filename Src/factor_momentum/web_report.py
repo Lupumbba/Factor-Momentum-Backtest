@@ -9,6 +9,7 @@ import pandas as pd
 
 from .config import (
     COST_GRID_METRICS_FILE,
+    DEFAULT_UNIVERSE_SLUG,
     EQUITY_CURVE_FILE,
     RESULTS_DIR,
     SELECTION_FILE,
@@ -19,6 +20,7 @@ from .config import (
     SITE_DIR,
     SITE_INDEX_FILE,
     STRATEGY_RETURNS_FILE,
+    UNIVERSES,
 )
 from .evaluate import compute_drawdown
 
@@ -55,12 +57,31 @@ class MetricRecord(TypedDict):
     max_drawdown: float
 
 
+class UniverseComparisonRecord(TypedDict):
+    universe_slug: str
+    universe_name: str
+    requested_tickers: int
+    used_tickers: int
+    dropped_tickers: int
+    signal_date: str
+    conservative_candidates: int
+    strategy_candidates: int
+    cost_bps: int
+    total_return: float
+    CAGR: float
+    annual_vol: float
+    Sharpe: float
+    max_drawdown: float
+
+
 class ChartPoint(TypedDict):
     date: str
     value: float
 
 
 class DashboardPayload(TypedDict):
+    universe_slug: str
+    universe_name: str
     signal_date: str
     generated_at: str
     base_cost_bps: int
@@ -69,6 +90,7 @@ class DashboardPayload(TypedDict):
     rows: list[SelectionRecord]
     metrics: list[MetricRecord]
     base_metric: MetricRecord
+    universe_comparison: list[UniverseComparisonRecord]
     equity_points: list[ChartPoint]
     drawdown_points: list[ChartPoint]
 
@@ -127,6 +149,53 @@ def _load_metrics(path: Path) -> pd.DataFrame:
         raise ValueError(f"Cost metrics report is missing columns: {missing}")
 
     return metrics.sort_values("cost_bps").reset_index(drop=True)
+
+
+def _load_universe_comparison(path: Path | None) -> list[UniverseComparisonRecord]:
+    if path is None:
+        return []
+
+    _assert_exists(path, "universe comparison")
+    comparison: pd.DataFrame = pd.read_csv(path)
+    required_columns: set[str] = {
+        "universe_slug",
+        "universe_name",
+        "requested_tickers",
+        "used_tickers",
+        "dropped_tickers",
+        "signal_date",
+        "conservative_candidates",
+        "strategy_candidates",
+        "cost_bps",
+        "total_return",
+        "CAGR",
+        "annual_vol",
+        "Sharpe",
+        "max_drawdown",
+    }
+    missing: list[str] = _missing_columns(comparison, required_columns)
+    if missing:
+        raise ValueError(f"Universe comparison is missing columns: {missing}")
+
+    return [
+        {
+            "universe_slug": str(row["universe_slug"]),
+            "universe_name": str(row["universe_name"]),
+            "requested_tickers": int(row["requested_tickers"]),
+            "used_tickers": int(row["used_tickers"]),
+            "dropped_tickers": int(row["dropped_tickers"]),
+            "signal_date": str(row["signal_date"]),
+            "conservative_candidates": int(row["conservative_candidates"]),
+            "strategy_candidates": int(row["strategy_candidates"]),
+            "cost_bps": int(row["cost_bps"]),
+            "total_return": float(row["total_return"]),
+            "CAGR": float(row["CAGR"]),
+            "annual_vol": float(row["annual_vol"]),
+            "Sharpe": float(row["Sharpe"]),
+            "max_drawdown": float(row["max_drawdown"]),
+        }
+        for _, row in comparison.iterrows()
+    ]
 
 
 def _load_series(path: Path, column: str, label: str) -> pd.Series:
@@ -282,8 +351,11 @@ def _chart_points(series: pd.Series, max_points: int) -> list[ChartPoint]:
 
 
 def _dashboard_payload(
+    universe_slug: str,
+    universe_name: str,
     selection: pd.DataFrame,
     metrics: pd.DataFrame,
+    universe_comparison: list[UniverseComparisonRecord],
     equity: pd.Series,
     cost_bps: int,
     chart_points: int,
@@ -297,6 +369,8 @@ def _dashboard_payload(
 
     drawdown: pd.Series = compute_drawdown(equity)
     return {
+        "universe_slug": universe_slug,
+        "universe_name": universe_name,
         "signal_date": signal_dates[0],
         "generated_at": pd.Timestamp.now(tz="Asia/Shanghai").strftime("%Y-%m-%d %H:%M"),
         "base_cost_bps": cost_bps,
@@ -305,6 +379,7 @@ def _dashboard_payload(
         "rows": records,
         "metrics": _metric_records(metrics),
         "base_metric": _base_metric(metrics, cost_bps),
+        "universe_comparison": universe_comparison,
         "equity_points": _chart_points(equity, chart_points),
         "drawdown_points": _chart_points(drawdown, chart_points),
     }
@@ -736,6 +811,7 @@ def _html_template() -> str:
       <div>
         <p class="eyebrow">12-1 动量因子 · 自动选股面板</p>
         <h1>用规则筛出值得进一步研究的入手候选</h1>
+        <p class="panel-subtitle" id="universeName">--</p>
       </div>
       <div class="stamp">
         <span>信号日期</span>
@@ -746,6 +822,31 @@ def _html_template() -> str:
 
     <section class="notice">
       这个页面只做规则化筛选：先找动量排名靠前的股票，再排除跌破 200 日均线或近期波动过高的标的。它不是投资建议，也不能替代仓位控制、止损和你自己的基本面判断。
+    </section>
+
+    <section class="panel" id="universeComparisonPanel" style="margin-top:16px;">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">股票池对比</h2>
+          <p class="panel-subtitle">同一套 12-1 动量策略，在不同股票池上的结果。重点看 Sharpe、回撤、交易成本后收益和候选股数量。</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>股票池</th>
+              <th class="numeric">使用股票</th>
+              <th class="numeric">优先候选</th>
+              <th class="numeric">累计收益</th>
+              <th class="numeric">年化收益</th>
+              <th class="numeric">Sharpe</th>
+              <th class="numeric">最大回撤</th>
+            </tr>
+          </thead>
+          <tbody id="universeTable"></tbody>
+        </table>
+      </div>
     </section>
 
     <section class="kpi-grid" aria-label="核心指标">
@@ -976,6 +1077,29 @@ def _html_template() -> str:
       `).join("");
     }
 
+    function renderUniverseTable() {
+      const panel = document.getElementById("universeComparisonPanel");
+      if (DATA.universe_comparison.length === 0) {
+        panel.style.display = "none";
+        return;
+      }
+      document.getElementById("universeTable").innerHTML = DATA.universe_comparison.map((row) => {
+        const current = row.universe_slug === DATA.universe_slug;
+        const name = current ? `<strong>${row.universe_name}</strong>` : row.universe_name;
+        return `
+          <tr>
+            <td>${name}</td>
+            <td class="numeric">${row.used_tickers}/${row.requested_tickers}</td>
+            <td class="numeric">${row.conservative_candidates}</td>
+            <td class="numeric">${pct(row.total_return)}</td>
+            <td class="numeric">${pct(row.CAGR)}</td>
+            <td class="numeric">${num.format(row.Sharpe)}</td>
+            <td class="numeric">${pct(row.max_drawdown)}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
     function scalePoints(points, width, height, pad) {
       const values = points.map((point) => point.value);
       let min = Math.min(...values);
@@ -1032,6 +1156,7 @@ def _html_template() -> str:
     function render() {
       const candidates = DATA.rows.filter((row) => row.signal_kind === "primary");
       const riskRows = DATA.rows.filter((row) => row.signal_kind === "risk");
+      setText("universeName", `当前股票池：${DATA.universe_name}`);
       setText("signalDate", DATA.signal_date);
       setText("generatedAt", `生成时间 ${DATA.generated_at}`);
       setText("candidateCount", `${DATA.top_candidate_count} 只`);
@@ -1042,6 +1167,7 @@ def _html_template() -> str:
       setText("equitySubtitle", `按 ${DATA.base_cost_bps} bps 交易成本计算，累计收益 ${pct2(DATA.base_metric.total_return)}。`);
       renderStockList("candidateList", candidates, "当前没有通过保守过滤的候选。");
       renderStockList("riskList", riskRows, "当前没有被风险过滤挡下的强动量股票。");
+      renderUniverseTable();
       renderLineChart("equityChart", DATA.equity_points, "#087969", "#d8eee9", (value) => num.format(value));
       renderLineChart("drawdownChart", DATA.drawdown_points, "#bd3d4f", "#f5dbe0", (value) => pct(value));
       renderRankTable();
@@ -1078,6 +1204,9 @@ def build_site(
     chart_points: int,
     sma_window: int,
     vol_window: int,
+    comparison_path: Path | None,
+    universe_slug: str,
+    universe_name: str,
 ) -> Path:
     selection_path: Path = results_dir / selection_file
     metrics_path: Path = results_dir / metrics_file
@@ -1086,12 +1215,16 @@ def build_site(
 
     selection: pd.DataFrame = _load_selection(selection_path, sma_window, vol_window)
     metrics: pd.DataFrame = _load_metrics(metrics_path)
+    universe_comparison: list[UniverseComparisonRecord] = _load_universe_comparison(comparison_path)
     equity: pd.Series = _load_series(equity_path, "equity", "base cost equity curve")
     _load_series(returns_path, "strategy_return", "base cost strategy returns")
 
     payload: DashboardPayload = _dashboard_payload(
+        universe_slug,
+        universe_name,
         selection,
         metrics,
+        universe_comparison,
         equity,
         cost_bps,
         chart_points,
@@ -1104,6 +1237,7 @@ def build_site(
 
 
 def main() -> None:
+    universe_name: str = UNIVERSES[DEFAULT_UNIVERSE_SLUG]["name"]
     out_path: Path = build_site(
         RESULTS_DIR,
         SITE_DIR,
@@ -1116,6 +1250,9 @@ def main() -> None:
         SITE_CHART_POINTS,
         SELECTION_SMA_WINDOW,
         SELECTION_VOL_WINDOW,
+        None,
+        DEFAULT_UNIVERSE_SLUG,
+        universe_name,
     )
     print(f"Saved local website: {out_path}")
 

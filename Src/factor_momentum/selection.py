@@ -138,22 +138,30 @@ def save_selection(selection: pd.DataFrame, out_path: Path) -> None:
     selection.to_csv(out_path, index=False)
 
 
-def main() -> None:
-    scores: pd.DataFrame = _load_frame(MOMENTUM_SCORES_PATH, "momentum scores")
-    prices: pd.DataFrame = _load_frame(PRICES_PATH, "processed prices")
-    daily_returns: pd.DataFrame = _load_frame(RETURNS_PATH, "daily returns")
-
+def build_and_save_latest_selection(
+    momentum_scores_path: Path,
+    prices_path: Path,
+    returns_path: Path,
+    out_path: Path,
+    top_n: int,
+    min_momentum: float,
+    sma_window: int,
+    vol_window: int,
+    high_vol_quantile: float,
+) -> pd.DataFrame:
+    scores: pd.DataFrame = _load_frame(momentum_scores_path, "momentum scores")
+    prices: pd.DataFrame = _load_frame(prices_path, "processed prices")
+    daily_returns: pd.DataFrame = _load_frame(returns_path, "daily returns")
     selection: pd.DataFrame = build_latest_selection(
         scores,
         prices,
         daily_returns,
-        SELECTION_TOP_N,
-        SELECTION_MIN_MOMENTUM,
-        SELECTION_SMA_WINDOW,
-        SELECTION_VOL_WINDOW,
-        SELECTION_HIGH_VOL_QUANTILE,
+        top_n,
+        min_momentum,
+        sma_window,
+        vol_window,
+        high_vol_quantile,
     )
-    out_path: Path = Path(RESULTS_DIR) / SELECTION_FILE
     save_selection(selection, out_path)
 
     candidates: pd.DataFrame = selection[selection["conservative_entry_signal"]]
@@ -169,6 +177,21 @@ def main() -> None:
                 "reason",
             ]
         ].to_string(index=False)
+    )
+    return selection
+
+
+def main() -> None:
+    build_and_save_latest_selection(
+        MOMENTUM_SCORES_PATH,
+        PRICES_PATH,
+        RETURNS_PATH,
+        Path(RESULTS_DIR) / SELECTION_FILE,
+        SELECTION_TOP_N,
+        SELECTION_MIN_MOMENTUM,
+        SELECTION_SMA_WINDOW,
+        SELECTION_VOL_WINDOW,
+        SELECTION_HIGH_VOL_QUANTILE,
     )
 
 

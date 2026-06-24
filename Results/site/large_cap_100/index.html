@@ -1,0 +1,793 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>动量选股分析台</title>
+  <style>
+    :root {
+      --ink: #17211f;
+      --muted: #5d6764;
+      --line: #d6ddd8;
+      --paper: #f5f6f1;
+      --panel: #ffffff;
+      --teal: #087969;
+      --teal-soft: #d8eee9;
+      --amber: #a9651f;
+      --amber-soft: #f4e5ce;
+      --coral: #bd3d4f;
+      --coral-soft: #f5dbe0;
+      --blue: #3556a4;
+      --blue-soft: #dfe7fb;
+      --shadow: 0 16px 40px rgba(23, 33, 31, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      letter-spacing: 0;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(8, 121, 105, 0.08) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(53, 86, 164, 0.06) 1px, transparent 1px),
+        var(--paper);
+      background-size: 28px 28px;
+      font-family: "Avenir Next", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 42px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 20px;
+      align-items: end;
+      padding: 22px 0 18px;
+      border-bottom: 2px solid var(--ink);
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--teal);
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 760px;
+      font-family: "Baskerville", "Songti SC", "STSong", serif;
+      font-size: 2.45rem;
+      line-height: 1.08;
+      font-weight: 700;
+    }
+
+    .stamp {
+      display: grid;
+      gap: 6px;
+      justify-items: end;
+      color: var(--muted);
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+
+    .stamp strong {
+      color: var(--ink);
+      font-size: 1.1rem;
+    }
+
+    .notice {
+      margin: 18px 0;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--amber);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 20px 0;
+    }
+
+    .kpi {
+      min-height: 116px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .kpi span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.84rem;
+      font-weight: 700;
+    }
+
+    .kpi strong {
+      display: block;
+      margin-top: 12px;
+      font-size: 2rem;
+      line-height: 1;
+    }
+
+    .kpi small {
+      display: block;
+      margin-top: 10px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .grid-two {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 1.05rem;
+      line-height: 1.2;
+    }
+
+    .panel-subtitle {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+    }
+
+    .stock-row {
+      display: grid;
+      grid-template-columns: 84px 1fr auto;
+      gap: 14px;
+      align-items: center;
+      min-height: 76px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .ticker {
+      font-size: 1.35rem;
+      font-weight: 800;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.55;
+    }
+
+    .weight {
+      min-width: 82px;
+      text-align: right;
+      font-weight: 800;
+      color: var(--teal);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 28px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .badge.primary {
+      color: var(--teal);
+      background: var(--teal-soft);
+    }
+
+    .badge.risk {
+      color: var(--amber);
+      background: var(--amber-soft);
+    }
+
+    .badge.watch {
+      color: var(--blue);
+      background: var(--blue-soft);
+    }
+
+    .badge.avoid {
+      color: var(--coral);
+      background: var(--coral-soft);
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .chart-box {
+      min-height: 330px;
+      padding: 16px;
+    }
+
+    .chart {
+      width: 100%;
+      min-height: 250px;
+    }
+
+    .chart svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .filter-button {
+      min-height: 36px;
+      padding: 7px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--ink);
+      background: #fff;
+      cursor: pointer;
+    }
+
+    .filter-button.active {
+      border-color: var(--ink);
+      color: #fff;
+      background: var(--ink);
+    }
+
+    .search {
+      width: 180px;
+      min-height: 36px;
+      padding: 7px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      min-width: 820px;
+      border-collapse: collapse;
+      background: #fff;
+    }
+
+    th,
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+      font-size: 0.9rem;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      background: #fafbf8;
+    }
+
+    td.numeric,
+    th.numeric {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .rules {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .rule {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.86);
+    }
+
+    .rule strong {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .rule p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .empty {
+      padding: 18px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    @media (max-width: 880px) {
+      .topbar,
+      .grid-two,
+      .chart-grid,
+      .rules {
+        grid-template-columns: 1fr;
+      }
+
+      .stamp {
+        justify-items: start;
+      }
+
+      .kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .shell {
+        width: min(100% - 20px, 1180px);
+        padding-top: 16px;
+      }
+
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stock-row {
+        grid-template-columns: 1fr;
+      }
+
+      .weight {
+        text-align: left;
+      }
+
+      .panel-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .controls {
+        width: 100%;
+      }
+
+      .search {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">12-1 动量因子 · 自动选股面板</p>
+        <h1>用规则筛出值得进一步研究的入手候选</h1>
+        <p class="panel-subtitle" id="universeName">--</p>
+      </div>
+      <div class="stamp">
+        <span>信号日期</span>
+        <strong id="signalDate">--</strong>
+        <span id="generatedAt">--</span>
+      </div>
+    </header>
+
+    <section class="notice">
+      这个页面只做规则化筛选：先找动量排名靠前的股票，再排除跌破 200 日均线或近期波动过高的标的。它不是投资建议，也不能替代仓位控制、止损和你自己的基本面判断。
+    </section>
+
+    <section class="panel" id="universeComparisonPanel" style="margin-top:16px;">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">股票池对比</h2>
+          <p class="panel-subtitle">同一套 12-1 动量策略，在不同股票池上的结果。重点看 Sharpe、回撤、交易成本后收益和候选股数量。</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>股票池</th>
+              <th class="numeric">使用股票</th>
+              <th class="numeric">优先候选</th>
+              <th class="numeric">累计收益</th>
+              <th class="numeric">年化收益</th>
+              <th class="numeric">Sharpe</th>
+              <th class="numeric">最大回撤</th>
+            </tr>
+          </thead>
+          <tbody id="universeTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="kpi-grid" aria-label="核心指标">
+      <div class="kpi">
+        <span>优先研究候选</span>
+        <strong id="candidateCount">--</strong>
+        <small>通过动量、趋势和波动三层过滤</small>
+      </div>
+      <div class="kpi">
+        <span>原始动量组合</span>
+        <strong id="strategyCount">--</strong>
+        <small>仅按 12-1 动量排名前列筛选</small>
+      </div>
+      <div class="kpi">
+        <span id="sharpeLabel">回测 Sharpe</span>
+        <strong id="sharpeValue">--</strong>
+        <small>交易成本已计入指定基准情景</small>
+      </div>
+      <div class="kpi">
+        <span>历史最大回撤</span>
+        <strong id="drawdownValue">--</strong>
+        <small>用于理解策略曾经承受的下跌</small>
+      </div>
+    </section>
+
+    <section class="grid-two">
+      <article class="panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">优先研究</h2>
+            <p class="panel-subtitle">这些股票同时满足：动量前列、价格在 200 日均线上方、近期波动不在高风险组。</p>
+          </div>
+        </div>
+        <div class="list" id="candidateList"></div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">动量强但风险高</h2>
+            <p class="panel-subtitle">它们进入了原始动量组合，但被趋势或波动过滤器挡下。</p>
+          </div>
+        </div>
+        <div class="list" id="riskList"></div>
+      </article>
+    </section>
+
+    <section class="chart-grid">
+      <article class="panel chart-box">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">策略净值曲线</h2>
+            <p class="panel-subtitle" id="equitySubtitle">--</p>
+          </div>
+        </div>
+        <div class="chart" id="equityChart"></div>
+      </article>
+
+      <article class="panel chart-box">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">历史回撤</h2>
+            <p class="panel-subtitle">越接近 0 表示回撤越浅，向下越多表示历史压力越大。</p>
+          </div>
+        </div>
+        <div class="chart" id="drawdownChart"></div>
+      </article>
+    </section>
+
+    <section class="panel" style="margin-top:16px;">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">完整股票排名</h2>
+          <p class="panel-subtitle">可以按标签筛选，也可以直接搜索股票代码。</p>
+        </div>
+        <div class="controls" aria-label="排名筛选">
+          <button class="filter-button active" data-filter="all" type="button">全部</button>
+          <button class="filter-button" data-filter="primary" type="button">优先研究</button>
+          <button class="filter-button" data-filter="risk" type="button">风险高</button>
+          <button class="filter-button" data-filter="watch" type="button">观察</button>
+          <button class="filter-button" data-filter="avoid" type="button">暂不考虑</button>
+          <input class="search" id="tickerSearch" type="search" placeholder="搜索代码">
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="numeric">排名</th>
+              <th>股票</th>
+              <th>信号</th>
+              <th class="numeric">动量分数</th>
+              <th>趋势</th>
+              <th class="numeric">63 日年化波动</th>
+              <th class="numeric">建议等权</th>
+            </tr>
+          </thead>
+          <tbody id="rankTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top:16px;">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">交易成本压力测试</h2>
+          <p class="panel-subtitle">同一套原始动量策略，在不同交易成本假设下的表现。</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="numeric">成本</th>
+              <th class="numeric">累计收益</th>
+              <th class="numeric">年化收益</th>
+              <th class="numeric">年化波动</th>
+              <th class="numeric">Sharpe</th>
+              <th class="numeric">最大回撤</th>
+            </tr>
+          </thead>
+          <tbody id="costTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="rules">
+      <div class="rule">
+        <strong>1. 先看“优先研究”</strong>
+        <p>它是更保守的候选池，适合拿去做下一步基本面、估值和仓位判断。</p>
+      </div>
+      <div class="rule">
+        <strong>2. 不追高波动</strong>
+        <p>“动量强但风险高”说明过去涨得强，但近期波动已经偏大，直接追入风险更高。</p>
+      </div>
+      <div class="rule">
+        <strong>3. 每次更新后再看</strong>
+        <p>如果当前月份还没结束，信号会随着行情变化；完整月末信号更适合严肃决策。</p>
+      </div>
+    </section>
+  </main>
+
+  <script id="dashboard-data" type="application/json">{"universe_slug":"large_cap_100","universe_name":"扩展大盘 100 只","signal_date":"2026-06-23","generated_at":"2026-06-24 14:40","base_cost_bps":10,"top_candidate_count":2,"strategy_count":10,"rows":[{"signal_date":"2026-06-23","ticker":"MU","rank":1,"mom12_1":6.897154432473422,"latest_price":1051.77001953125,"sma":410.7247366333008,"annualized_vol":1.0037459002694034,"above_sma":true,"high_volatility":true,"strategy_signal":true,"conservative_entry_signal":false,"strategy_equal_weight":0.1,"conservative_equal_weight":0.0,"reason":"strategy_signal_but_high_volatility","status":"动量强但风险高","signal_kind":"risk"},{"signal_date":"2026-06-23","ticker":"INTC","rank":2,"mom12_1":4.119642957953776,"latest_price":132.27999877929688,"sma":56.63495001792908,"annualized_vol":0.9763374723090305,"above_sma":true,"high_volatility":true,"strategy_signal":true,"conservative_entry_signal":false,"strategy_equal_weight":0.1,"conservative_equal_weight":0.0,"reason":"strategy_signal_but_high_volatility","status":"动量强但风险高","signal_kind":"risk"},{"signal_date":"2026-06-23","ticker":"AMD","rank":3,"mom12_1":2.6370683423878853,"latest_price":519.8499755859375,"sma":264.8880500793457,"annualized_vol":0.8149791371607576,"above_sma":true,"high_volatility":true,"strategy_signal":true,"conservative_entry_signal":false,"strategy_equal_weight":0.1,"conservative_equal_weight":0.0,"reason":"strategy_signal_but_high_volatility","status":"动量强但风险高","signal_kind":"risk"},{"signal_date":"2026-06-23","ticker":"LRCX","rank":4,"mom12_1":2.2845258928976047,"latest_price":371.3299865722656,"sma":212.6207936096191,"annualized_vol":0.6915086252567599,"above_sma":true,"high_volatility":true,"strategy_signal":true,"conservative_entry_signal":false,"strategy_equal_weight":0.1,"conservative_equal_weight":0.0,"reason":"strategy_signal_but_high_volatility","status":"动量强但风险高","signal_kind":"risk"},{"signal_date":"2026-06-23","ticker":"AMAT","rank":5,"mom12_1":1.4764382168582766,"latest_price":585.8800048828125,"sma":321.75339706420897,"annualized_vol":0.6280571872130494,"above_sma":true,"high_volatility":true,"strategy_signal":true,"conservative_entry_signal":false,"strategy_equal_weight":0.1,"conservative_equal_weight":0.0,"reason":"strategy_signal_but_high_volatility","status":"动量强但风险高","signal_kind":"risk"},{"signal_date":"2026-06-23","ticker":"CAT","rank":6,"mom12_1":1.280593541378055,"latest_price":984.239990234375,"sma":674.5009172058105,"annualized_vol":0.4464228699960411,"above_sma":true,"high_volatility":true,"strategy_signal":true,"conservative_entry_signal":false,"strategy_equal_weight":0.1,"conservative_equal_weight":0.0,"reason":"strategy_signal_but_high_volatility","status":"动量强但风险高","signal_kind":"risk"},{"signal_date":"2026-06-23","ticker":"GOOGL","rank":7,"mom12_1":1.1630673550438786,"latest_price":346.1300048828125,"sma":311.9020905303955,"annualized_vol":0.3778036070919573,"above_sma":true,"high_volatility":false,"strategy_signal":true,"conservative_entry_signal":true,"strategy_equal_weight":0.1,"conservative_equal_weight":0.5,"reason":"conservative_entry_signal","status":"优先研究","signal_kind":"primary"},{"signal_date":"2026-06-23","ticker":"KLAC","rank":8,"mom12_1":1.1592155232996424,"latest_price":244.4900054931641,"sma":145.8294748687744,"annualized_vol":0.6734905152453454,"above_sma":true,"high_volatility":true,"strategy_signal":true,"conservative_entry_signal":false,"strategy_equal_weight":0.1,"conservative_equal_weight":0.0,"reason":"strategy_signal_but_high_volatility","status":"动量强但风险高","signal_kind":"risk"},{"signal_date":"2026-06-23","ticker":"GOOG","rank":9,"mom12_1":1.12682734018804,"latest_price":346.0799865722656,"sma":311.4145471954346,"annualized_vol":0.3704084197768554,"above_sma":true,"high_volatility":false,"strategy_signal":true,"conservative_entry_signal":true,"strategy_equal_weight":0.1,"conservative_equal_weight":0.5,"reason":"conservative_entry_signal","status":"优先研究","signal_kind":"primary"},{"signal_date":"2026-06-23","ticker":"CSCO","rank":10,"mom12_1":0.7756089713662806,"latest_price":121.1500015258789,"sma":82.69084274291993,"annualized_vol":0.421135175194171,"above_sma":true,"high_volatility":true,"strategy_signal":true,"conservative_entry_signal":false,"strategy_equal_weight":0.1,"conservative_equal_weight":0.0,"reason":"strategy_signal_but_high_volatility","status":"动量强但风险高","signal_kind":"risk"},{"signal_date":"2026-06-23","ticker":"ADI","rank":11,"mom12_1":0.7572461428336246,"latest_price":407.260009765625,"sma":310.75990234375,"annualized_vol":0.4652748123019287,"above_sma":true,"high_volatility":true,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"SLB","rank":12,"mom12_1":0.649341897861268,"latest_price":47.790000915527344,"sma":44.58321419715881,"annualized_vol":0.3362809114015365,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"AVGO","rank":13,"mom12_1":0.6300831132807942,"latest_price":380.1499938964844,"sma":359.4307522583008,"annualized_vol":0.550129092883531,"above_sma":true,"high_volatility":true,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"QCOM","rank":14,"mom12_1":0.6034632978204073,"latest_price":204.1300048828125,"sma":165.88108459472656,"annualized_vol":0.817273808057687,"above_sma":true,"high_volatility":true,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"MRK","rank":15,"mom12_1":0.5388208549340074,"latest_price":119.5999984741211,"sma":104.23109146118163,"annualized_vol":0.2870931890744667,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"AAPL","rank":16,"mom12_1":0.527016727086794,"latest_price":294.29998779296875,"sma":268.3650476074219,"annualized_vol":0.2305319818638144,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"TXN","rank":17,"mom12_1":0.5136011494065289,"latest_price":304.3599853515625,"sma":209.86960174560548,"annualized_vol":0.5893886151227854,"above_sma":true,"high_volatility":true,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"C","rank":18,"mom12_1":0.5126210445430353,"latest_price":144.97000122070312,"sma":112.97677913665773,"annualized_vol":0.2917824477295145,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"MS","rank":19,"mom12_1":0.512284388483087,"latest_price":226.02999877929688,"sma":174.9252130126953,"annualized_vol":0.2723577337425018,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"JNJ","rank":20,"mom12_1":0.5120138594873649,"latest_price":239.0800018310547,"sma":214.23865295410155,"annualized_vol":0.1993428921576084,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"GS","rank":21,"mom12_1":0.4717266799642789,"latest_price":1094.43994140625,"sma":872.913490600586,"annualized_vol":0.3173992652975043,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"LLY","rank":22,"mom12_1":0.4275483898336758,"latest_price":1107.0799560546875,"sma":967.1331671142578,"annualized_vol":0.3601586078091891,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"XOM","rank":23,"mom12_1":0.390448371067484,"latest_price":139.72999572753906,"sma":133.3250136947632,"annualized_vol":0.3181903933598017,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"TSLA","rank":24,"mom12_1":0.371875601337793,"latest_price":381.6099853515625,"sma":417.5339501953125,"annualized_vol":0.453015974195075,"above_sma":false,"high_volatility":true,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"OXY","rank":25,"mom12_1":0.369563323447835,"latest_price":52.22999954223633,"sma":48.79866352081299,"annualized_vol":0.392432753181608,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"CVS","rank":26,"mom12_1":0.3671726476755637,"latest_price":101.56999969482422,"sma":79.56294666290283,"annualized_vol":0.3358215771752329,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"NVDA","rank":27,"mom12_1":0.3366359259825189,"latest_price":200.0399932861328,"sma":190.0187187957764,"annualized_vol":0.4145372914975426,"above_sma":true,"high_volatility":true,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"CVX","rank":28,"mom12_1":0.3276202479730188,"latest_price":175.97999572753906,"sma":169.32498489379884,"annualized_vol":0.2713773604961247,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"COP","rank":29,"mom12_1":0.3122119630487057,"latest_price":109.97000122070312,"sma":104.0048424911499,"annualized_vol":0.3351380567141394,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"BMY","rank":30,"mom12_1":0.2969792400519229,"latest_price":55.529998779296875,"sma":52.99602197647095,"annualized_vol":0.2760495064806216,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"NEE","rank":31,"mom12_1":0.2803012295207101,"latest_price":86.43000030517578,"sma":84.88856113433837,"annualized_vol":0.2663848760353978,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"GE","rank":32,"mom12_1":0.2645153908042552,"latest_price":356.4700012207031,"sma":305.7575631713867,"annualized_vol":0.4139093248983751,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"AEP","rank":33,"mom12_1":0.2594582313836495,"latest_price":133.74000549316406,"sma":121.68346069335938,"annualized_vol":0.2056824380553958,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"RTX","rank":34,"mom12_1":0.2499883751125067,"latest_price":186.38999938964844,"sma":181.50220573425293,"annualized_vol":0.2854783232794038,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"MO","rank":35,"mom12_1":0.2485906197687992,"latest_price":71.61000061035156,"sma":62.57647893905639,"annualized_vol":0.2722090584710844,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"UNH","rank":36,"mom12_1":0.2445997099435486,"latest_price":409.25,"sma":330.33273696899414,"annualized_vol":0.3263670662389241,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"AMGN","rank":37,"mom12_1":0.2424812889276881,"latest_price":347.010009765625,"sma":328.5765130615234,"annualized_vol":0.2472383320878779,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"GILD","rank":38,"mom12_1":0.2359646761204568,"latest_price":125.0500030517578,"sma":127.94224098205568,"annualized_vol":0.2336240672527436,"above_sma":false,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"AMZN","rank":39,"mom12_1":0.2336023310149442,"latest_price":234.11000061035156,"sma":232.82980010986327,"annualized_vol":0.3235509878665644,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"TMO","rank":40,"mom12_1":0.2179019513209581,"latest_price":469.3500061035156,"sma":524.5942634582519,"annualized_vol":0.3584785426447461,"above_sma":false,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"ABBV","rank":41,"mom12_1":0.2111460251766639,"latest_price":234.7599945068359,"sma":218.3287376403809,"annualized_vol":0.2706902600309146,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"WMT","rank":42,"mom12_1":0.1936772396125714,"latest_price":119.41999816894533,"sma":116.22908626556396,"annualized_vol":0.269124884854266,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"LMT","rank":43,"mom12_1":0.1685752989085236,"latest_price":503.6700134277344,"sma":532.9492582702637,"annualized_vol":0.2746072485790589,"above_sma":false,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"PFE","rank":44,"mom12_1":0.1555070202860646,"latest_price":24.719999313354492,"sma":25.23529697418213,"annualized_vol":0.1892745255498528,"above_sma":false,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"EOG","rank":45,"mom12_1":0.1548663414589033,"latest_price":134.89999389648438,"sma":119.54785278320313,"annualized_vol":0.3129340101657613,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"KO","rank":46,"mom12_1":0.1410096842430228,"latest_price":80.30999755859375,"sma":72.8880337524414,"annualized_vol":0.1950622551820749,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"NOC","rank":47,"mom12_1":0.1400633311688963,"latest_price":513.219970703125,"sma":610.9074198913574,"annualized_vol":0.2759489402717637,"above_sma":false,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"UPS","rank":48,"mom12_1":0.1296529380559326,"latest_price":105.83000183105467,"sma":97.21493923187256,"annualized_vol":0.3534019922500173,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"PEP","rank":49,"mom12_1":0.1234336429370555,"latest_price":142.0500030517578,"sma":147.43658950805664,"annualized_vol":0.2040414101879885,"above_sma":false,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"EL","rank":50,"mom12_1":0.1170087818358436,"latest_price":83.76000213623047,"sma":92.48443801879884,"annualized_vol":0.5073722990859798,"above_sma":false,"high_volatility":true,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"SBUX","rank":51,"mom12_1":0.1107365099794168,"latest_price":101.0500030517578,"sma":91.11992107391356,"annualized_vol":0.2990159344606615,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"BAC","rank":52,"mom12_1":0.1084425476421389,"latest_price":57.90999984741211,"sma":51.78227024078369,"annualized_vol":0.2140793756014169,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"HON","rank":53,"mom12_1":0.1073480365100236,"latest_price":222.3699951171875,"sma":211.73296844482425,"annualized_vol":0.3081054129176203,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"BA","rank":54,"mom12_1":0.1031832923359121,"latest_price":216.7100067138672,"sma":218.5083506011963,"annualized_vol":0.3780695037964199,"above_sma":false,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"CB","rank":55,"mom12_1":0.0791462840816603,"latest_price":332.1099853515625,"sma":307.5045455932617,"annualized_vol":0.1808001870047289,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"DE","rank":56,"mom12_1":0.0768203369995375,"latest_price":591.9400024414062,"sma":526.7443215942383,"annualized_vol":0.3359164070551995,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"DUK","rank":57,"mom12_1":0.076429494810825,"latest_price":125.0500030517578,"sma":122.33326461791992,"annualized_vol":0.1654630040046026,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"LIN","rank":58,"mom12_1":0.0716556989968746,"latest_price":512.260009765625,"sma":465.0776795959473,"annualized_vol":0.1919965999024331,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"JPM","rank":59,"mom12_1":0.052502408101523,"latest_price":334.1400146484375,"sma":305.5416130065918,"annualized_vol":0.2392379366034032,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"ORCL","rank":60,"mom12_1":0.0430646510093783,"latest_price":165.16000366210938,"sma":203.53288215637207,"annualized_vol":0.6758373373374913,"above_sma":false,"high_volatility":true,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"IBM","rank":61,"mom12_1":0.0360836136870812,"latest_price":264.94000244140625,"sma":270.62862350463865,"annualized_vol":0.5462166203897064,"above_sma":false,"high_volatility":true,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"SO","rank":62,"mom12_1":0.0351573368750377,"latest_price":94.93000030517578,"sma":91.28526176452635,"annualized_vol":0.1828013799968281,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"ELV","rank":63,"mom12_1":0.0279273430704625,"latest_price":395.1000061035156,"sma":338.8188569641113,"annualized_vol":0.2931046587295024,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"CL","rank":64,"mom12_1":0.0165900062569213,"latest_price":91.43000030517578,"sma":83.76045650482178,"annualized_vol":0.2447303255642878,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"BLK","rank":65,"mom12_1":0.0129391098685849,"latest_price":1015.3300170898438,"sma":1057.8412017822266,"annualized_vol":0.2719208765330514,"above_sma":false,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"AXP","rank":66,"mom12_1":0.0025307642341469,"latest_price":337.7799987792969,"sma":336.33241119384763,"annualized_vol":0.2404628094375052,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"PM","rank":67,"mom12_1":0.000893546096836,"latest_price":178.69000244140625,"sma":164.89350280761718,"annualized_vol":0.3380385355656318,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"观察","signal_kind":"watch"},{"signal_date":"2026-06-23","ticker":"WFC","rank":68,"mom12_1":-0.0109660266971324,"latest_price":84.12999725341797,"sma":83.49823726654053,"annualized_vol":0.2792249818287737,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"LOW","rank":69,"mom12_1":-0.0148448273153742,"latest_price":213.5399932861328,"sma":243.39321411132812,"annualized_vol":0.3038546404254117,"above_sma":false,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"BRK-B","rank":70,"mom12_1":-0.0232414070088343,"latest_price":492.80999755859375,"sma":490.1140997314453,"annualized_vol":0.1227269560687176,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"MCD","rank":71,"mom12_1":-0.0277989817731466,"latest_price":271.6600036621094,"sma":301.33861450195315,"annualized_vol":0.1880829130239409,"above_sma":false,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"COST","rank":72,"mom12_1":-0.0285236211159863,"latest_price":957.6799926757812,"sma":955.9389721679688,"annualized_vol":0.209501659038373,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"SCHW","rank":73,"mom12_1":-0.0304905290854391,"latest_price":93.16999816894533,"sma":94.15995765686036,"annualized_vol":0.2965759101297889,"above_sma":false,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"MDLZ","rank":74,"mom12_1":-0.0692653537411412,"latest_price":61.060001373291016,"sma":58.29093053817749,"annualized_vol":0.2113278747720636,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"DHR","rank":75,"mom12_1":-0.0703824827698134,"latest_price":178.97000122070312,"sma":203.5583617401123,"annualized_vol":0.2920022706883372,"above_sma":false,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"PG","rank":76,"mom12_1":-0.0729992950207577,"latest_price":150.86000061035156,"sma":147.30142890930176,"annualized_vol":0.2225694725745379,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"V","rank":77,"mom12_1":-0.0735450488092368,"latest_price":328.4800109863281,"sma":327.7376510620117,"annualized_vol":0.2494666659883195,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"MSFT","rank":78,"mom12_1":-0.0876011411769914,"latest_price":373.94000244140625,"sma":448.2270872497558,"annualized_vol":0.3314982514165809,"above_sma":false,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"MA","rank":79,"mom12_1":-0.1157456749935893,"latest_price":488.0700073242187,"sma":532.580817565918,"annualized_vol":0.2349279562344326,"above_sma":false,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"HD","rank":80,"mom12_1":-0.1186228142079888,"latest_price":324.45001220703125,"sma":352.97872833251955,"annualized_vol":0.2805464220546906,"above_sma":false,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"MDT","rank":81,"mom12_1":-0.1335498975557666,"latest_price":80.62999725341797,"sma":90.91686584472656,"annualized_vol":0.2766802347928602,"above_sma":false,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"META","rank":82,"mom12_1":-0.1410324238969654,"latest_price":562.2000122070312,"sma":651.9256674194336,"annualized_vol":0.4398899758752129,"above_sma":false,"high_volatility":true,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"CI","rank":83,"mom12_1":-0.1472210290871648,"latest_price":283.0799865722656,"sma":278.2507456207275,"annualized_vol":0.2847374797679741,"above_sma":true,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"DIS","rank":84,"mom12_1":-0.1733007932360996,"latest_price":103.52999877929688,"sma":106.71805870056151,"annualized_vol":0.268294061833345,"above_sma":false,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"ICE","rank":85,"mom12_1":-0.1868652414860918,"latest_price":133.0,"sma":157.55173530578614,"annualized_vol":0.2397811581606753,"above_sma":false,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"SPGI","rank":86,"mom12_1":-0.1891437869283762,"latest_price":400.1600036621094,"sma":465.548657989502,"annualized_vol":0.2724486944630814,"above_sma":false,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"TMUS","rank":87,"mom12_1":-0.1980870702372618,"latest_price":184.57000732421875,"sma":204.41334259033204,"annualized_vol":0.2863014761687475,"above_sma":false,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"ISRG","rank":88,"mom12_1":-0.2185641860947303,"latest_price":403.1799926757813,"sma":490.2417008972168,"annualized_vol":0.3401654359705651,"above_sma":false,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"SYK","rank":89,"mom12_1":-0.2230728771374805,"latest_price":310.0,"sma":348.6979148864746,"annualized_vol":0.2955113951780785,"above_sma":false,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"ADP","rank":90,"mom12_1":-0.2662514073355362,"latest_price":220.5,"sma":238.40959358215332,"annualized_vol":0.3205658191510424,"above_sma":false,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"BKNG","rank":91,"mom12_1":-0.2726917823275134,"latest_price":168.94000244140625,"sma":189.2989419555664,"annualized_vol":0.3641726230324287,"above_sma":false,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"CRM","rank":92,"mom12_1":-0.2950921459166242,"latest_price":153.4199981689453,"sma":214.2699476623535,"annualized_vol":0.5005209324451254,"above_sma":false,"high_volatility":true,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"ADBE","rank":93,"mom12_1":-0.3299989966305086,"latest_price":197.42999267578125,"sma":293.79650009155273,"annualized_vol":0.463005136688243,"above_sma":false,"high_volatility":true,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"NKE","rank":94,"mom12_1":-0.3373121841506479,"latest_price":42.380001068115234,"sma":57.56194494247436,"annualized_vol":0.4396971191222295,"above_sma":false,"high_volatility":true,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"NFLX","rank":95,"mom12_1":-0.3576426467179923,"latest_price":72.81999969482422,"sma":97.83174991607666,"annualized_vol":0.3351894124696317,"above_sma":false,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"ABT","rank":96,"mom12_1":-0.3577776599900081,"latest_price":90.52999877929688,"sma":112.25669052124024,"annualized_vol":0.2771867632130471,"above_sma":false,"high_volatility":false,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"ACN","rank":97,"mom12_1":-0.365653076472524,"latest_price":127.01000213623048,"sma":223.32471405029295,"annualized_vol":0.5517777208179335,"above_sma":false,"high_volatility":true,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"NOW","rank":98,"mom12_1":-0.3951345986159811,"latest_price":95.94000244140624,"sma":135.90402988433837,"annualized_vol":0.7814675573276927,"above_sma":false,"high_volatility":true,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"BSX","rank":99,"mom12_1":-0.5502281004917873,"latest_price":45.599998474121094,"sma":80.57465003967285,"annualized_vol":0.4742311101336363,"above_sma":false,"high_volatility":true,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"},{"signal_date":"2026-06-23","ticker":"INTU","rank":100,"mom12_1":-0.5756540998753397,"latest_price":258.04998779296875,"sma":517.2228427124023,"annualized_vol":0.6570444424334446,"above_sma":false,"high_volatility":true,"strategy_signal":false,"conservative_entry_signal":false,"strategy_equal_weight":0.0,"conservative_equal_weight":0.0,"reason":"outside_top_10","status":"暂不考虑","signal_kind":"avoid"}],"metrics":[{"cost_bps":0,"periods":2631,"total_return":12.960513565595404,"CAGR":0.2872410554357847,"annual_vol":0.2754133402736909,"Sharpe":1.0554250186563925,"max_drawdown":-0.3480311458883813},{"cost_bps":10,"periods":2631,"total_return":12.136031798662364,"CAGR":0.2797575460449173,"annual_vol":0.2753869089874655,"Sharpe":1.0343101836680266,"max_drawdown":-0.3482777635729879},{"cost_bps":50,"periods":2631,"total_return":9.292995356198906,"CAGR":0.2502081815494479,"annual_vol":0.2754155706842449,"Sharpe":0.9493468442509392,"max_drawdown":-0.3492642343114132}],"base_metric":{"cost_bps":10,"periods":2631,"total_return":12.136031798662364,"CAGR":0.2797575460449173,"annual_vol":0.2753869089874655,"Sharpe":1.0343101836680266,"max_drawdown":-0.3482777635729879},"universe_comparison":[{"universe_slug":"author_50","universe_name":"作者原始 50 只","requested_tickers":50,"used_tickers":49,"dropped_tickers":1,"signal_date":"2026-06-23","conservative_candidates":3,"strategy_candidates":10,"cost_bps":10,"total_return":15.62000102018838,"CAGR":0.3089207421248265,"annual_vol":0.2717303530963268,"Sharpe":1.1273491374114923,"max_drawdown":-0.3387959352572409},{"universe_slug":"large_cap_100","universe_name":"扩展大盘 100 只","requested_tickers":100,"used_tickers":100,"dropped_tickers":0,"signal_date":"2026-06-23","conservative_candidates":2,"strategy_candidates":10,"cost_bps":10,"total_return":12.136031798662364,"CAGR":0.2797575460449173,"annual_vol":0.2753869089874655,"Sharpe":1.0343101836680266,"max_drawdown":-0.3482777635729879},{"universe_slug":"sector_balanced_100","universe_name":"行业均衡 100 只","requested_tickers":100,"used_tickers":100,"dropped_tickers":0,"signal_date":"2026-06-23","conservative_candidates":3,"strategy_candidates":10,"cost_bps":10,"total_return":6.394410490082021,"CAGR":0.2112241290931,"annual_vol":0.2368397616077852,"Sharpe":0.9282256510491208,"max_drawdown":-0.3498981482631149}],"equity_points":[{"date":"2016-01-05","value":1.0},{"date":"2016-01-22","value":1.0},{"date":"2016-02-09","value":1.0},{"date":"2016-02-26","value":1.0},{"date":"2016-03-15","value":1.0},{"date":"2016-04-01","value":1.0},{"date":"2016-04-19","value":1.0},{"date":"2016-05-05","value":1.0},{"date":"2016-05-23","value":1.0},{"date":"2016-06-09","value":1.0},{"date":"2016-06-27","value":1.0},{"date":"2016-07-14","value":1.0},{"date":"2016-08-01","value":1.0},{"date":"2016-08-17","value":1.0},{"date":"2016-09-02","value":1.0},{"date":"2016-09-21","value":1.0},{"date":"2016-10-07","value":1.0},{"date":"2016-10-25","value":1.0},{"date":"2016-11-10","value":1.0},{"date":"2016-11-29","value":1.0},{"date":"2016-12-15","value":1.0},{"date":"2017-01-04","value":1.0},{"date":"2017-01-23","value":1.0},{"date":"2017-02-08","value":1.040045059220436},{"date":"2017-02-27","value":1.074065578570462},{"date":"2017-03-15","value":1.0899611032529117},{"date":"2017-03-31","value":1.0930319751399828},{"date":"2017-04-19","value":1.0503883754374468},{"date":"2017-05-05","value":1.0655659612181363},{"date":"2017-05-23","value":1.1163470094672412},{"date":"2017-06-09","value":1.1611167628670145},{"date":"2017-06-27","value":1.153274407211551},{"date":"2017-07-14","value":1.2145273467022935},{"date":"2017-08-01","value":1.210529728077529},{"date":"2017-08-17","value":1.1870992679120105},{"date":"2017-09-05","value":1.2146168207964383},{"date":"2017-09-21","value":1.2770839035275048},{"date":"2017-10-09","value":1.3197944232249768},{"date":"2017-10-25","value":1.345754988333619},{"date":"2017-11-10","value":1.3765427814193352},{"date":"2017-11-29","value":1.3580179717116931},{"date":"2017-12-15","value":1.3643640124830285},{"date":"2018-01-04","value":1.405760207439235},{"date":"2018-01-23","value":1.5234630611816167},{"date":"2018-02-08","value":1.380103438357027},{"date":"2018-02-27","value":1.5272945843756036},{"date":"2018-03-15","value":1.573736027795048},{"date":"2018-04-03","value":1.4318214562102294},{"date":"2018-04-19","value":1.5292082281914645},{"date":"2018-05-07","value":1.5301116308200053},{"date":"2018-05-23","value":1.6094980017849143},{"date":"2018-06-11","value":1.6656107715478716},{"date":"2018-06-27","value":1.5674727016988985},{"date":"2018-07-16","value":1.6631524486546723},{"date":"2018-08-01","value":1.5867072194742673},{"date":"2018-08-17","value":1.5796553785369098},{"date":"2018-09-05","value":1.661054542272288},{"date":"2018-09-21","value":1.6874537869484834},{"date":"2018-10-09","value":1.6220137520093763},{"date":"2018-10-25","value":1.45784663007959},{"date":"2018-11-12","value":1.4201486728796864},{"date":"2018-11-29","value":1.4679266444053418},{"date":"2018-12-18","value":1.378818275664673},{"date":"2019-01-07","value":1.4337982254075508},{"date":"2019-01-24","value":1.4806713082755014},{"date":"2019-02-11","value":1.5847513261486543},{"date":"2019-02-28","value":1.6556519874285898},{"date":"2019-03-18","value":1.6599538571834629},{"date":"2019-04-03","value":1.7127125541839978},{"date":"2019-04-22","value":1.6163072087910688},{"date":"2019-05-08","value":1.6260238469984845},{"date":"2019-05-24","value":1.6042732390689858},{"date":"2019-06-12","value":1.6725484424046289},{"date":"2019-06-28","value":1.6821322284004663},{"date":"2019-07-17","value":1.7273246563775717},{"date":"2019-08-02","value":1.6749978723587187},{"date":"2019-08-20","value":1.693561497324329},{"date":"2019-09-06","value":1.7345958759920481},{"date":"2019-09-24","value":1.6910913591720744},{"date":"2019-10-10","value":1.6792671855390402},{"date":"2019-10-28","value":1.6943355771454751},{"date":"2019-11-13","value":1.7347006850219353},{"date":"2019-12-02","value":1.727448752601641},{"date":"2019-12-18","value":1.8157365252087287},{"date":"2020-01-07","value":1.9057675899911055},{"date":"2020-01-24","value":1.9762790458410873},{"date":"2020-02-11","value":2.087779348167611},{"date":"2020-02-28","value":1.8678914603837893},{"date":"2020-03-17","value":1.5732037790092614},{"date":"2020-04-02","value":1.6009872736524422},{"date":"2020-04-21","value":1.8155173525813613},{"date":"2020-05-07","value":1.942530643181377},{"date":"2020-05-26","value":1.997663612287625},{"date":"2020-06-11","value":2.088132981320838},{"date":"2020-06-29","value":2.179164435042382},{"date":"2020-07-16","value":2.410321918975645},{"date":"2020-08-03","value":2.5963847298167644},{"date":"2020-08-19","value":2.7156821284252355},{"date":"2020-09-04","value":2.7424297587742803},{"date":"2020-09-23","value":2.5786613046768108},{"date":"2020-10-09","value":2.842262342312002},{"date":"2020-10-27","value":2.7732232288534577},{"date":"2020-11-12","value":2.7495728494587834},{"date":"2020-12-01","value":2.9401415933096327},{"date":"2020-12-17","value":3.0250901344925683},{"date":"2021-01-06","value":3.028964707309292},{"date":"2021-01-25","value":3.271218776510442},{"date":"2021-02-10","value":3.2095040292434045},{"date":"2021-03-01","value":3.1147573008168727},{"date":"2021-03-17","value":3.0520122625640607},{"date":"2021-04-06","value":3.1318695657930475},{"date":"2021-04-22","value":3.0169285199419704},{"date":"2021-05-10","value":3.0537788906633216},{"date":"2021-05-26","value":3.1076586122443146},{"date":"2021-06-14","value":3.088515677567254},{"date":"2021-06-30","value":3.1955291599012186},{"date":"2021-07-19","value":2.9980855019413606},{"date":"2021-08-04","value":3.1613781698614347},{"date":"2021-08-20","value":3.116770246530634},{"date":"2021-09-08","value":3.2247176909885713},{"date":"2021-09-24","value":3.352366197012698},{"date":"2021-10-12","value":3.3297371323236806},{"date":"2021-10-28","value":3.5334859258135234},{"date":"2021-11-15","value":3.525339981277611},{"date":"2021-12-02","value":3.370491674997306},{"date":"2021-12-20","value":3.1683623567405634},{"date":"2022-01-06","value":3.3662349263802405},{"date":"2022-01-25","value":3.148961943711267},{"date":"2022-02-10","value":3.4053767023042796},{"date":"2022-03-01","value":3.1974732803907613},{"date":"2022-03-17","value":3.3787631238863822},{"date":"2022-04-04","value":3.3769412305557704},{"date":"2022-04-21","value":3.229698265981305},{"date":"2022-05-09","value":3.001941973719891},{"date":"2022-05-25","value":3.190046559216999},{"date":"2022-06-13","value":3.1221847503239535},{"date":"2022-06-30","value":3.0512088819000085},{"date":"2022-07-19","value":3.04859978120682},{"date":"2022-08-04","value":2.989204805636613},{"date":"2022-08-22","value":3.248988926707457},{"date":"2022-09-08","value":3.2093462766018},{"date":"2022-09-26","value":2.9713117237135633},{"date":"2022-10-12","value":3.2610612436351505},{"date":"2022-10-28","value":3.6461442643765682},{"date":"2022-11-15","value":3.7025050069287655},{"date":"2022-12-02","value":3.7305257520625337},{"date":"2022-12-20","value":3.5539185194212655},{"date":"2023-01-09","value":3.5440872357759874},{"date":"2023-01-26","value":3.6375359201892055},{"date":"2023-02-13","value":3.5833119691550097},{"date":"2023-03-02","value":3.4300614307384882},{"date":"2023-03-20","value":3.242994306345921},{"date":"2023-04-05","value":3.3973220032637723},{"date":"2023-04-24","value":3.45723359592255},{"date":"2023-05-10","value":3.3538156885543677},{"date":"2023-05-26","value":3.492685090441855},{"date":"2023-06-14","value":3.704237385591786},{"date":"2023-07-03","value":3.739165750933585},{"date":"2023-07-20","value":3.769473117761887},{"date":"2023-08-07","value":3.9069720949703655},{"date":"2023-08-23","value":3.903238851372039},{"date":"2023-09-11","value":3.945215189740908},{"date":"2023-09-27","value":3.665507398999068},{"date":"2023-10-13","value":3.7840322525397507},{"date":"2023-10-31","value":3.6090230966296946},{"date":"2023-11-16","value":4.133576042675573},{"date":"2023-12-05","value":4.063329387372976},{"date":"2023-12-21","value":4.341314031807515},{"date":"2024-01-10","value":4.373323391408262},{"date":"2024-01-29","value":4.574387804065581},{"date":"2024-02-14","value":4.901111650660314},{"date":"2024-03-04","value":5.2578069657693876},{"date":"2024-03-20","value":5.083635080145642},{"date":"2024-04-08","value":5.118633943807824},{"date":"2024-04-24","value":4.761570466691988},{"date":"2024-05-10","value":4.987648220197211},{"date":"2024-05-29","value":5.381101637047971},{"date":"2024-06-14","value":5.64589929944594},{"date":"2024-07-03","value":5.819603788591859},{"date":"2024-07-22","value":5.51386199841091},{"date":"2024-08-07","value":4.799224408492982},{"date":"2024-08-23","value":5.559844607840833},{"date":"2024-09-11","value":5.216834747986961},{"date":"2024-09-27","value":5.649077639834991},{"date":"2024-10-15","value":5.703487925538397},{"date":"2024-10-31","value":5.571428881933098},{"date":"2024-11-18","value":5.790763532267399},{"date":"2024-12-05","value":6.005653379436124},{"date":"2024-12-23","value":6.038998615082946},{"date":"2025-01-13","value":5.9453748340205985},{"date":"2025-01-30","value":6.566385676225818},{"date":"2025-02-18","value":6.7393423372948185},{"date":"2025-03-06","value":5.788807702632092},{"date":"2025-03-24","value":5.9777165267160575},{"date":"2025-04-09","value":5.6405847967702},{"date":"2025-04-28","value":5.967010711525351},{"date":"2025-05-14","value":6.000967372973164},{"date":"2025-06-02","value":6.346963889424194},{"date":"2025-06-18","value":6.2641609171253},{"date":"2025-07-08","value":6.377116293095638},{"date":"2025-07-24","value":6.318722909857301},{"date":"2025-08-11","value":6.431222514044817},{"date":"2025-08-27","value":6.3409094985760746},{"date":"2025-09-15","value":6.862049765678967},{"date":"2025-10-01","value":6.765788011733297},{"date":"2025-10-17","value":6.787604513868839},{"date":"2025-11-04","value":6.769862916924327},{"date":"2025-11-20","value":6.329486344677636},{"date":"2025-12-09","value":6.875396826208073},{"date":"2025-12-26","value":6.9632110794237585},{"date":"2026-01-14","value":7.620857059788605},{"date":"2026-02-02","value":8.019199114075713},{"date":"2026-02-19","value":7.716435524163144},{"date":"2026-03-09","value":7.451707313763721},{"date":"2026-03-25","value":7.618087364911958},{"date":"2026-04-13","value":8.742582234287589},{"date":"2026-04-29","value":9.772378285891799},{"date":"2026-05-15","value":11.201219485902492},{"date":"2026-06-22","value":14.066516801124141},{"date":"2026-06-23","value":13.136031798662364}],"drawdown_points":[{"date":"2016-01-05","value":0.0},{"date":"2016-01-22","value":0.0},{"date":"2016-02-09","value":0.0},{"date":"2016-02-26","value":0.0},{"date":"2016-03-15","value":0.0},{"date":"2016-04-01","value":0.0},{"date":"2016-04-19","value":0.0},{"date":"2016-05-05","value":0.0},{"date":"2016-05-23","value":0.0},{"date":"2016-06-09","value":0.0},{"date":"2016-06-27","value":0.0},{"date":"2016-07-14","value":0.0},{"date":"2016-08-01","value":0.0},{"date":"2016-08-17","value":0.0},{"date":"2016-09-02","value":0.0},{"date":"2016-09-21","value":0.0},{"date":"2016-10-07","value":0.0},{"date":"2016-10-25","value":0.0},{"date":"2016-11-10","value":0.0},{"date":"2016-11-29","value":0.0},{"date":"2016-12-15","value":0.0},{"date":"2017-01-04","value":0.0},{"date":"2017-01-23","value":0.0},{"date":"2017-02-08","value":-0.004707122138846609},{"date":"2017-02-27","value":-0.0014553433317380238},{"date":"2017-03-15","value":0.0},{"date":"2017-03-31","value":-0.0009610231455000617},{"date":"2017-04-19","value":-0.03993757569398204},{"date":"2017-05-05","value":-0.029261458012296626},{"date":"2017-05-23","value":-0.018758791012548626},{"date":"2017-06-09","value":-0.024964323042724},{"date":"2017-06-27","value":-0.031549859312636874},{"date":"2017-07-14","value":0.0},{"date":"2017-08-01","value":-0.03422244176121936},{"date":"2017-08-17","value":-0.05291559078697883},{"date":"2017-09-05","value":-0.030961701991835455},{"date":"2017-09-21","value":-0.005381343935533245},{"date":"2017-10-09","value":0.0},{"date":"2017-10-25","value":-0.02278964290628993},{"date":"2017-11-10","value":-0.00794666013903711},{"date":"2017-11-29","value":-0.04282085364300314},{"date":"2017-12-15","value":-0.038347939429211664},{"date":"2018-01-04","value":-0.009170435614098915},{"date":"2018-01-23","value":0.0},{"date":"2018-02-08","value":-0.09843638483456574},{"date":"2018-02-27","value":-0.011038284054035064},{"date":"2018-03-15","value":-0.009591060106125648},{"date":"2018-04-03","value":-0.09890302724444056},{"date":"2018-04-19","value":-0.03761401314417823},{"date":"2018-05-07","value":-0.0370454692309502},{"date":"2018-05-23","value":0.0},{"date":"2018-06-11","value":0.0},{"date":"2018-06-27","value":-0.06750065852347098},{"date":"2018-07-16","value":-0.010580176953235099},{"date":"2018-08-01","value":-0.05605792325943104},{"date":"2018-08-17","value":-0.06025310766242309},{"date":"2018-09-05","value":-0.027586931215015542},{"date":"2018-09-21","value":-0.012132308939899028},{"date":"2018-10-09","value":-0.0716792613256676},{"date":"2018-10-25","value":-0.1656363832718306},{"date":"2018-11-12","value":-0.1872119065563741},{"date":"2018-11-29","value":-0.15986732839597795},{"date":"2018-12-18","value":-0.21086636992008723},{"date":"2019-01-07","value":-0.17939991194810156},{"date":"2019-01-24","value":-0.15257322514719474},{"date":"2019-02-11","value":-0.09300551867519413},{"date":"2019-02-28","value":-0.05242722260936161},{"date":"2019-03-18","value":-0.04996515044531402},{"date":"2019-04-03","value":-0.01976997330186603},{"date":"2019-04-22","value":-0.0749452647175215},{"date":"2019-05-08","value":-0.06938417946348774},{"date":"2019-05-24","value":-0.08183261918523133},{"date":"2019-06-12","value":-0.0427569411182811},{"date":"2019-06-28","value":-0.03727189064695746},{"date":"2019-07-17","value":-0.011865910761920118},{"date":"2019-08-02","value":-0.04179999343614138},{"date":"2019-08-20","value":-0.031180478117684096},{"date":"2019-09-06","value":-0.0077063337276477295},{"date":"2019-09-24","value":-0.032593546416314734},{"date":"2019-10-10","value":-0.0393576882936002},{"date":"2019-10-28","value":-0.030737657680748987},{"date":"2019-11-13","value":-0.00764637662872647},{"date":"2019-12-02","value":-0.03276616823647194},{"date":"2019-12-18","value":-0.008201146745988486},{"date":"2020-01-07","value":-0.005466249246352084},{"date":"2020-01-24","value":-0.012796881773353808},{"date":"2020-02-11","value":0.0},{"date":"2020-02-28","value":-0.1438884636740565},{"date":"2020-03-17","value":-0.27895280171971626},{"date":"2020-03-20","value":-0.3482777635729879},{"date":"2020-04-02","value":-0.2662187800766225},{"date":"2020-04-21","value":-0.16789311214823732},{"date":"2020-05-07","value":-0.1096790533254346},{"date":"2020-05-26","value":-0.08440993470434355},{"date":"2020-06-11","value":-0.05776174001746259},{"date":"2020-06-29","value":-0.018608737869991843},{"date":"2020-07-16","value":-0.015084962333964502},{"date":"2020-08-03","value":0.0},{"date":"2020-08-19","value":-0.005003383640934889},{"date":"2020-09-04","value":-0.0768996860371759},{"date":"2020-09-23","value":-0.13202405555326058},{"date":"2020-10-09","value":-0.04329609458235606},{"date":"2020-10-27","value":-0.06653462133236532},{"date":"2020-11-12","value":-0.07449532573134365},{"date":"2020-12-01","value":-0.010349993761622045},{"date":"2020-12-17","value":0.0},{"date":"2021-01-06","value":-0.010990341927640257},{"date":"2021-01-25","value":0.0},{"date":"2021-02-10","value":-0.018865979771879204},{"date":"2021-03-01","value":-0.04782971925236801},{"date":"2021-03-17","value":-0.06701065533141104},{"date":"2021-04-06","value":-0.042598560425861964},{"date":"2021-04-22","value":-0.07773563125598537},{"date":"2021-05-10","value":-0.06647060337525734},{"date":"2021-05-26","value":-0.049999763219934934},{"date":"2021-06-14","value":-0.05585169058551498},{"date":"2021-06-30","value":-0.023138047859325717},{"date":"2021-07-19","value":-0.08349587515526702},{"date":"2021-08-04","value":-0.03357788462139455},{"date":"2021-08-20","value":-0.05717013670166804},{"date":"2021-09-08","value":-0.03579446400444031},{"date":"2021-09-24","value":0.0},{"date":"2021-10-12","value":-0.022748092984545276},{"date":"2021-10-28","value":0.0},{"date":"2021-11-15","value":-0.030915612599231923},{"date":"2021-12-02","value":-0.07348202515196178},{"date":"2021-12-20","value":-0.12904556444146364},{"date":"2022-01-06","value":-0.0746521672227396},{"date":"2022-01-25","value":-0.1343785642303249},{"date":"2022-02-10","value":-0.06389244358060198},{"date":"2022-03-01","value":-0.12104323225164781},{"date":"2022-03-17","value":-0.07120827793264184},{"date":"2022-04-04","value":-0.07170910009208808},{"date":"2022-04-21","value":-0.11218487232441798},{"date":"2022-05-09","value":-0.17479303724893513},{"date":"2022-05-25","value":-0.12308477138753093},{"date":"2022-06-13","value":-0.14173937487209798},{"date":"2022-06-30","value":-0.16125000543174384},{"date":"2022-07-19","value":-0.16196722384481987},{"date":"2022-08-04","value":-0.17829437067911702},{"date":"2022-08-22","value":-0.10688204246073363},{"date":"2022-09-08","value":-0.11777945192949679},{"date":"2022-09-26","value":-0.18321301864674544},{"date":"2022-10-12","value":-0.1035634706587194},{"date":"2022-10-28","value":0.0},{"date":"2022-11-15","value":-0.017793123930952226},{"date":"2022-12-02","value":-0.0103597326211603},{"date":"2022-12-20","value":-0.05721040208390571},{"date":"2023-01-09","value":-0.05981846186475859},{"date":"2023-01-26","value":-0.03502823464872418},{"date":"2023-02-13","value":-0.049412857344372285},{"date":"2023-03-02","value":-0.09006742291884284},{"date":"2023-03-20","value":-0.1396929103985357},{"date":"2023-04-05","value":-0.09875259437007722},{"date":"2023-04-24","value":-0.08285914435297326},{"date":"2023-05-10","value":-0.11029402412642686},{"date":"2023-05-26","value":-0.07345451110639478},{"date":"2023-06-14","value":-0.017333555549116197},{"date":"2023-07-03","value":-0.008067698907635368},{"date":"2023-07-20","value":-0.0353620873585041},{"date":"2023-08-07","value":-0.00017501419972798526},{"date":"2023-08-23","value":-0.005060845855289098},{"date":"2023-09-11","value":-0.014936906855606558},{"date":"2023-09-27","value":-0.08477589111208672},{"date":"2023-10-13","value":-0.055181951813952024},{"date":"2023-10-31","value":-0.09887920333464062},{"date":"2023-11-16","value":-0.005051128712734165},{"date":"2023-12-05","value":-0.03174366181836974},{"date":"2023-12-21","value":-0.004022908756284083},{"date":"2024-01-10","value":0.0},{"date":"2024-01-29","value":0.0},{"date":"2024-02-14","value":0.0},{"date":"2024-03-04","value":0.0},{"date":"2024-03-20","value":-0.04443518460482043},{"date":"2024-04-08","value":-0.03785648999611224},{"date":"2024-04-24","value":-0.10497328540243789},{"date":"2024-05-10","value":-0.06247772004667562},{"date":"2024-05-29","value":-0.009794691125626254},{"date":"2024-06-14","value":0.0},{"date":"2024-07-03","value":-0.0018660821701100838},{"date":"2024-07-22","value":-0.08164636902294276},{"date":"2024-08-07","value":-0.2006718407744963},{"date":"2024-08-23","value":-0.07398779934094135},{"date":"2024-09-11","value":-0.13111733039349927},{"date":"2024-09-27","value":-0.05912571556761792},{"date":"2024-10-15","value":-0.05006348596291943},{"date":"2024-10-31","value":-0.0720583966504258},{"date":"2024-11-18","value":-0.035527418437398484},{"date":"2024-12-05","value":-0.007131567132566019},{"date":"2024-12-23","value":-0.019257889513745186},{"date":"2025-01-13","value":-0.034462526984841535},{"date":"2025-01-30","value":-0.012934074087535219},{"date":"2025-02-18","value":-0.0007284153052442566},{"date":"2025-03-06","value":-0.14166831762039223},{"date":"2025-03-24","value":-0.11365798507494995},{"date":"2025-04-09","value":-0.16364597220680832},{"date":"2025-04-28","value":-0.11524538283212649},{"date":"2025-05-14","value":-0.11021048102752107},{"date":"2025-06-02","value":-0.05890807346475746},{"date":"2025-06-18","value":-0.07118563011723122},{"date":"2025-07-08","value":-0.05443724549800155},{"date":"2025-07-24","value":-0.06309548627045114},{"date":"2025-08-11","value":-0.046414680914729},{"date":"2025-08-27","value":-0.05980578431462513},{"date":"2025-09-15","value":0.0},{"date":"2025-10-01","value":-0.03756258902753273},{"date":"2025-10-17","value":-0.034459178486825115},{"date":"2025-11-04","value":-0.03698293131505159},{"date":"2025-11-20","value":-0.09962676338768184},{"date":"2025-12-09","value":-0.021970669292548428},{"date":"2025-12-26","value":-0.009479038995409694},{"date":"2026-01-14","value":-0.008765169429470587},{"date":"2026-02-02","value":-0.014043684666698586},{"date":"2026-02-19","value":-0.051268308881767144},{"date":"2026-03-09","value":-0.08381650318112743},{"date":"2026-03-25","value":-0.06336016335946815},{"date":"2026-04-13","value":0.0},{"date":"2026-04-29","value":-0.009736004571041068},{"date":"2026-05-15","value":-0.04289324487166757},{"date":"2026-06-23","value":-0.06614892767109315}]}</script>
+  <script>
+    const DATA = JSON.parse(document.getElementById("dashboard-data").textContent);
+    const pctFormatter = new Intl.NumberFormat("zh-CN", { style: "percent", maximumFractionDigits: 1 });
+    const pct2Formatter = new Intl.NumberFormat("zh-CN", { style: "percent", maximumFractionDigits: 2 });
+    const num = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 2 });
+    let activeFilter = "all";
+
+    function setText(id, value) {
+      document.getElementById(id).textContent = value;
+    }
+
+    function pct(value) {
+      return pctFormatter.format(value);
+    }
+
+    function pct2(value) {
+      return pct2Formatter.format(value);
+    }
+
+    function badge(row) {
+      return `<span class="badge ${row.signal_kind}">${row.status}</span>`;
+    }
+
+    function trendText(row) {
+      return row.above_sma ? "高于 200 日均线" : "低于 200 日均线";
+    }
+
+    function rowMeta(row) {
+      return `排名 #${row.rank} · 动量 ${pct(row.mom12_1)} · ${trendText(row)} · 波动 ${pct(row.annualized_vol)}`;
+    }
+
+    function renderStockList(id, rows, emptyText) {
+      const el = document.getElementById(id);
+      if (rows.length === 0) {
+        el.innerHTML = `<div class="empty">${emptyText}</div>`;
+        return;
+      }
+      el.innerHTML = rows.map((row) => `
+        <div class="stock-row">
+          <div class="ticker">${row.ticker}</div>
+          <div>
+            ${badge(row)}
+            <div class="meta">${rowMeta(row)}</div>
+          </div>
+          <div class="weight">${row.conservative_entry_signal ? pct(row.conservative_equal_weight) : "暂不配权"}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderRankTable() {
+      const query = document.getElementById("tickerSearch").value.trim().toUpperCase();
+      const rows = DATA.rows.filter((row) => {
+        const filterOk = activeFilter === "all" || row.signal_kind === activeFilter;
+        const queryOk = query.length === 0 || row.ticker.includes(query);
+        return filterOk && queryOk;
+      });
+      const table = document.getElementById("rankTable");
+      if (rows.length === 0) {
+        table.innerHTML = `<tr><td colspan="7" class="empty">没有匹配的股票。</td></tr>`;
+        return;
+      }
+      table.innerHTML = rows.map((row) => `
+        <tr>
+          <td class="numeric">${row.rank}</td>
+          <td><strong>${row.ticker}</strong></td>
+          <td>${badge(row)}</td>
+          <td class="numeric">${pct(row.mom12_1)}</td>
+          <td>${trendText(row)}</td>
+          <td class="numeric">${pct(row.annualized_vol)}</td>
+          <td class="numeric">${row.conservative_entry_signal ? pct(row.conservative_equal_weight) : "-"}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderCostTable() {
+      document.getElementById("costTable").innerHTML = DATA.metrics.map((row) => `
+        <tr>
+          <td class="numeric">${row.cost_bps} bps</td>
+          <td class="numeric">${pct(row.total_return)}</td>
+          <td class="numeric">${pct(row.CAGR)}</td>
+          <td class="numeric">${pct(row.annual_vol)}</td>
+          <td class="numeric">${num.format(row.Sharpe)}</td>
+          <td class="numeric">${pct(row.max_drawdown)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderUniverseTable() {
+      const panel = document.getElementById("universeComparisonPanel");
+      if (DATA.universe_comparison.length === 0) {
+        panel.style.display = "none";
+        return;
+      }
+      document.getElementById("universeTable").innerHTML = DATA.universe_comparison.map((row) => {
+        const current = row.universe_slug === DATA.universe_slug;
+        const name = current ? `<strong>${row.universe_name}</strong>` : row.universe_name;
+        return `
+          <tr>
+            <td>${name}</td>
+            <td class="numeric">${row.used_tickers}/${row.requested_tickers}</td>
+            <td class="numeric">${row.conservative_candidates}</td>
+            <td class="numeric">${pct(row.total_return)}</td>
+            <td class="numeric">${pct(row.CAGR)}</td>
+            <td class="numeric">${num.format(row.Sharpe)}</td>
+            <td class="numeric">${pct(row.max_drawdown)}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function scalePoints(points, width, height, pad) {
+      const values = points.map((point) => point.value);
+      let min = Math.min(...values);
+      let max = Math.max(...values);
+      if (min === max) {
+        min = min - 1;
+        max = max + 1;
+      }
+      const xStep = points.length > 1 ? (width - pad * 2) / (points.length - 1) : 0;
+      return points.map((point, index) => {
+        const x = pad + index * xStep;
+        const y = height - pad - ((point.value - min) / (max - min)) * (height - pad * 2);
+        return { x, y, value: point.value, date: point.date };
+      });
+    }
+
+    function renderLineChart(id, points, color, fillColor, formatter) {
+      const width = 760;
+      const height = 260;
+      const pad = 34;
+      const scaled = scalePoints(points, width, height, pad);
+      const line = scaled.map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(" ");
+      const area = `${pad},${height - pad} ${line} ${width - pad},${height - pad}`;
+      const first = points[0];
+      const last = points[points.length - 1];
+      const min = points.reduce((a, b) => a.value < b.value ? a : b);
+      const max = points.reduce((a, b) => a.value > b.value ? a : b);
+      document.getElementById(id).innerHTML = `
+        <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="趋势图">
+          <line x1="${pad}" y1="${height - pad}" x2="${width - pad}" y2="${height - pad}" stroke="#d6ddd8" />
+          <line x1="${pad}" y1="${pad}" x2="${pad}" y2="${height - pad}" stroke="#d6ddd8" />
+          <polygon points="${area}" fill="${fillColor}" opacity="0.72"></polygon>
+          <polyline points="${line}" fill="none" stroke="${color}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"></polyline>
+          <text x="${pad}" y="${height - 8}" fill="#5d6764" font-size="13">${first.date}</text>
+          <text x="${width - pad}" y="${height - 8}" fill="#5d6764" font-size="13" text-anchor="end">${last.date}</text>
+          <text x="${pad}" y="20" fill="#5d6764" font-size="13">${formatter(max.value)}</text>
+          <text x="${width - pad}" y="20" fill="#5d6764" font-size="13" text-anchor="end">${formatter(min.value)}</text>
+        </svg>
+      `;
+    }
+
+    function wireFilters() {
+      document.querySelectorAll(".filter-button").forEach((button) => {
+        button.addEventListener("click", () => {
+          activeFilter = button.dataset.filter;
+          document.querySelectorAll(".filter-button").forEach((item) => item.classList.remove("active"));
+          button.classList.add("active");
+          renderRankTable();
+        });
+      });
+      document.getElementById("tickerSearch").addEventListener("input", renderRankTable);
+    }
+
+    function render() {
+      const candidates = DATA.rows.filter((row) => row.signal_kind === "primary");
+      const riskRows = DATA.rows.filter((row) => row.signal_kind === "risk");
+      setText("universeName", `当前股票池：${DATA.universe_name}`);
+      setText("signalDate", DATA.signal_date);
+      setText("generatedAt", `生成时间 ${DATA.generated_at}`);
+      setText("candidateCount", `${DATA.top_candidate_count} 只`);
+      setText("strategyCount", `${DATA.strategy_count} 只`);
+      setText("sharpeLabel", `${DATA.base_cost_bps} bps 成本 Sharpe`);
+      setText("sharpeValue", num.format(DATA.base_metric.Sharpe));
+      setText("drawdownValue", pct(DATA.base_metric.max_drawdown));
+      setText("equitySubtitle", `按 ${DATA.base_cost_bps} bps 交易成本计算，累计收益 ${pct2(DATA.base_metric.total_return)}。`);
+      renderStockList("candidateList", candidates, "当前没有通过保守过滤的候选。");
+      renderStockList("riskList", riskRows, "当前没有被风险过滤挡下的强动量股票。");
+      renderUniverseTable();
+      renderLineChart("equityChart", DATA.equity_points, "#087969", "#d8eee9", (value) => num.format(value));
+      renderLineChart("drawdownChart", DATA.drawdown_points, "#bd3d4f", "#f5dbe0", (value) => pct(value));
+      renderRankTable();
+      renderCostTable();
+      wireFilters();
+    }
+
+    render();
+  </script>
+</body>
+</html>
